@@ -309,7 +309,7 @@ export function VolunteerExplorer() {
                     How to use your downloaded flyer
                   </h2>
                   <p className="mt-2 text-sm text-slate-600">
-                    Keep this guide open as a quick reference. Your flyer download and event join credit will happen in the background.
+                    Keep this guide open as a quick reference! Your flyer download and event join credit will happen in the background!
                   </p>
                 </div>
                 <button
