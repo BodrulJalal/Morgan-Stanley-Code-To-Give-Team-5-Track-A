@@ -2,12 +2,14 @@
 
 import { useState, useCallback } from "react";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
+import { useAuth } from "@/context/AuthContext";
 import { VolunteerMap } from "./VolunteerMap";
 import { downloadAreaFlyer } from "@/lib/downloadFlyer";
 
 export function VolunteerExplorer() {
   const { events, toggleJoin } = useEvents();
-  const currentUserId = "vol_123";
+  const { user, logout } = useAuth();
+  const currentUserId = user?.id ?? "vol_guest";
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [flyerLoading, setFlyerLoading] = useState(false);
   const [flyerError, setFlyerError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export function VolunteerExplorer() {
             href="/admin"
             className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
           >
-            Admin Page (developmental, will be removed)
+            Admin
           </a>
           <a
             href="/organizer"
@@ -74,6 +76,22 @@ export function VolunteerExplorer() {
           >
             Create Event
           </a>
+          {user ? (
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Log out ({user.name.split(" ")[0]})
+            </button>
+          ) : (
+            <a
+              href="/login"
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Log in
+            </a>
+          )}
         </div>
       </header>
 

@@ -95,7 +95,7 @@ export default function OrganizerPage() {
           organization: form.organization.trim() || undefined,
         });
 
-        router.push("/");
+        router.push("/hub");
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Address lookup failed. Please try again.";
@@ -126,7 +126,7 @@ export default function OrganizerPage() {
           </div>
         </div>
         <a
-          href="/"
+          href="/hub"
           className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
         >
           Back to Explorer

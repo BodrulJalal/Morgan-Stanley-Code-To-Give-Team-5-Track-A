@@ -119,7 +119,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         <Link
-          href="/"
+          href="/hub"
           className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors hover:bg-purple-700"
         >
           ← Back to Explorer
