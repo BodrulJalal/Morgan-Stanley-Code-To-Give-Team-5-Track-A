@@ -1,19 +1,46 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useEvents } from "@/context/EventsContext";
+import type { FlyeringEvent } from "@/types/events";
 import { VolunteerMap } from "./VolunteerMap";
 import { downloadAreaFlyer } from "@/lib/downloadFlyer";
+import { ScoreboardCard } from "./ScoreboardCard";
+
+const FLYER_TUTORIAL_IMAGE_SRC = "/modal-assets/Flyer Tutorial.png";
 
 export function VolunteerExplorer() {
-  const { events, toggleJoin } = useEvents();
-  const currentUserId = "vol_123";
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const {
+    events,
+    currentUserId,
+    scoreboard,
+    recordFlyerPosted,
+    joinEvent,
+    leaveEvent,
+  } = useEvents();
+
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(
+    events[0]?.id ?? null
+  );
   const [flyerLoading, setFlyerLoading] = useState(false);
   const [flyerError, setFlyerError] = useState<string | null>(null);
+  const [flyerSuccess, setFlyerSuccess] = useState<string | null>(null);
+  const [isScoreboardVisible, setIsScoreboardVisible] = useState(false);
+  const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((e) => e.id === selectedEventId) ?? null;
+
+  const currentUserScore = useMemo(
+    () => scoreboard.find((entry) => entry.userId === currentUserId) ?? null,
+    [scoreboard, currentUserId]
+  );
+
+  const currentUserRank = useMemo(() => {
+    const index = scoreboard.findIndex((entry) => entry.userId === currentUserId);
+    return index >= 0 ? index + 1 : null;
+  }, [scoreboard, currentUserId]);
 
   const handleSelectEvent = useCallback((event: FlyeringEvent | null) => {
     setSelectedEventId(event?.id ?? null);
@@ -21,8 +48,12 @@ export function VolunteerExplorer() {
 
   const handleDownloadFlyer = useCallback(async () => {
     if (!selectedEvent) return;
+
+    setIsDownloadModalOpen(true);
     setFlyerError(null);
+    setFlyerSuccess(null);
     setFlyerLoading(true);
+
     const result = await downloadAreaFlyer(
       selectedEvent.lat,
       selectedEvent.lng,
@@ -30,18 +61,71 @@ export function VolunteerExplorer() {
       currentUserId,
       { flyerLang: "en" }
     );
+
     setFlyerLoading(false);
+
     if (!result.ok) {
       setFlyerError(result.error);
+      return;
     }
+
+    setFlyerSuccess("Flyer downloaded successfully.");
   }, [selectedEvent, currentUserId]);
 
   const handleToggleJoin = useCallback(
     (eventId: string) => {
-      toggleJoin(eventId, currentUserId);
+      const event = events.find((entry) => entry.id === eventId);
+      if (!event) return;
+
+      const alreadyJoined = event.attendees?.includes(currentUserId);
+
+      if (alreadyJoined) {
+        const left = leaveEvent(eventId, currentUserId);
+        if (!left) {
+          setFlyerError("Unable to leave this event right now.");
+          setFlyerSuccess(null);
+          return;
+        }
+
+        setFlyerError(null);
+        setFlyerSuccess("You left the event and your join points were removed.");
+        return;
+      }
+
+      const joined = joinEvent(eventId, currentUserId);
+      if (!joined) {
+        setFlyerError("Unable to join this event. It may already be full.");
+        setFlyerSuccess(null);
+        return;
+      }
+
+      setFlyerError(null);
+      setFlyerSuccess("You joined the event and earned points.");
     },
-    [toggleJoin, currentUserId]
+    [events, currentUserId, joinEvent, leaveEvent]
   );
+
+  const handlePosterAdded = useCallback(() => {
+    recordFlyerPosted();
+    setIsPosterModalOpen(false);
+    setFlyerError(null);
+    setFlyerSuccess("Poster confirmed. Points awarded.");
+  }, [recordFlyerPosted]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const shouldLockPage = isPosterModalOpen || isDownloadModalOpen;
+    const previousOverflow = document.body.style.overflow;
+
+    if (shouldLockPage) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isPosterModalOpen, isDownloadModalOpen]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-amber-50">
@@ -61,6 +145,7 @@ export function VolunteerExplorer() {
             </p>
           </div>
         </div>
+
         <div className="flex items-center gap-2">
           <a
             href="/admin"
@@ -77,159 +162,323 @@ export function VolunteerExplorer() {
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 md:flex-row md:p-6">
-        {/* Left sidebar: two-zone flex (detail stage + scrollable list) */}
-        <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-slate-100 md:w-[380px] md:shrink-0">
-          <div className="flex shrink-0 flex-col border-b border-slate-100 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-800">
-              Upcoming flyering events
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Tap a lemon to see details and download a flyer.
-            </p>
-          </div>
-
-          {/* Zone 1: Detail Stage (does not shrink) */}
-          <div className="shrink-0 border-b-2 border-slate-100 px-4 pb-4 pt-3 mb-4">
-            {selectedEvent ? (
-              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                <h3 className="text-base font-bold leading-snug text-slate-800">
-                  {selectedEvent.title}
-                </h3>
-                <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-600">
-                  <span aria-hidden="true">👤</span>
-                  <span className="font-medium">
-                    {(selectedEvent.attendees?.length ?? 0)} Volunteers Joining
-                  </span>
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleJoin(selectedEvent.id)}
-                    className={`rounded-full px-6 py-2 text-sm font-bold shadow-md transition-colors duration-200 ${
-                      selectedEvent.attendees?.includes(currentUserId)
-                        ? "border border-green-300 bg-green-100 text-green-800 hover:bg-green-50"
-                        : "bg-purple-600 text-white hover:bg-purple-700"
-                    }`}
-                  >
-                    {selectedEvent.attendees?.includes(currentUserId)
-                      ? "Joined ✅"
-                      : "Join Event"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadFlyer}
-                    disabled={flyerLoading}
-                    className="flex items-center justify-center gap-2 rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-60"
-                  >
-                    {flyerLoading ? (
-                      <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        Generating…
-                      </>
-                    ) : (
-                      "Download Flyer 🖨️"
-                    )}
-                  </button>
-                </div>
-                <div className="mt-4 border-t border-slate-100 pt-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    {new Date(selectedEvent.date).toLocaleString("en-US", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
-                  {selectedEvent.organizerName && (
-                    <p className="mt-0.5 text-xs text-slate-600">
-                      Organizer:{" "}
-                      <span className="font-medium text-slate-800">
-                        {selectedEvent.organizerName}
-                      </span>
-                    </p>
-                  )}
-                  <p className="mt-1 text-xs text-slate-600">{selectedEvent.address}</p>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-700">
-                    {selectedEvent.description}
-                  </p>
-                  {flyerError && (
-                    <p className="mt-2 text-xs font-medium text-red-600" role="alert">
-                      {flyerError}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border-2 border-dashed border-yellow-200 bg-amber-50 p-6 text-center">
-                <p className="text-sm font-medium text-slate-700">
-                  🍋 Tap a lemon on the map or select an event below to see details
-                  and join!
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Zone 2: Scrollable list (only this area scrolls) */}
-          <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-8 pt-2">
-            <div className="space-y-3">
-              {events.map((event) => {
-                const isActive = event.id === selectedEventId;
-                return (
-                  <button
-                    key={event.id}
-                    type="button"
-                    onClick={() => setSelectedEventId(event.id)}
-                    className={`w-full rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
-                      isActive
-                        ? "border-purple-500 bg-purple-50/70"
-                        : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-sm font-semibold text-slate-800">
-                          {event.title}
-                        </h3>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          {new Date(event.date).toLocaleString("en-US", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                          })}
-                        </p>
-                        <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">
-                          {event.address}
-                        </p>
-                      </div>
-                      <span
-                        className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-300 text-base shadow-sm"
-                        aria-hidden="true"
-                      >
-                        🍋
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {events.length === 0 && (
-              <p className="py-4 text-center text-xs text-slate-500">
-                No events yet. Be the first to create one in the Organizer Hub.
+      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 md:p-6">
+        <section className="rounded-3xl border border-yellow-200/80 bg-white/80 p-4 shadow-sm ring-1 ring-yellow-100">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                Your Progress
               </p>
-            )}
+              <h2 className="mt-1 text-lg font-bold text-slate-800">
+                Scoreboard controls
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Open the leaderboard when you want to check your standing.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="rounded-2xl bg-amber-100 px-4 py-2 text-sm shadow-sm ring-1 ring-amber-200">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+                  Current Rank
+                </p>
+                <p className="mt-1 font-bold text-slate-800">
+                  #{currentUserRank || "-"}
+                  {currentUserScore ? ` · ${currentUserScore.points} pts` : ""}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsScoreboardVisible((visible) => !visible)}
+                className="rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-slate-700"
+              >
+                {isScoreboardVisible ? "Hide scoreboard" : "Show scoreboard"}
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* Map: fixed, no scroll, fills and centers in container */}
-        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-green-900/5 p-3 shadow-inner ring-1 ring-green-800/10">
-          <div className="relative min-h-0 flex-1 overflow-hidden rounded-3xl bg-stone-50 shadow-md ring-1 ring-green-900/10">
-            <VolunteerMap
-              events={events}
-              selectedEventId={selectedEventId}
-              onSelectEvent={handleSelectEvent}
-            />
-          </div>
-        </section>
+        {isScoreboardVisible && (
+          <ScoreboardCard scoreboard={scoreboard} currentUserId={currentUserId} />
+        )}
+
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
+          <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-slate-100 md:w-[380px] md:shrink-0">
+            <div className="flex shrink-0 flex-col border-b border-slate-100 px-4 py-3">
+              <h2 className="text-sm font-semibold text-slate-800">
+                Upcoming flyering events
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Tap a lemon to see details and download a flyer.
+              </p>
+            </div>
+
+            <div className="mb-4 shrink-0 border-b-2 border-slate-100 px-4 pb-4 pt-3">
+              {selectedEvent ? (
+                <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm ring-1 ring-slate-100">
+                  <h3 className="text-base font-bold leading-snug text-slate-800">
+                    {selectedEvent.title}
+                  </h3>
+
+                  <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-600">
+                    <span aria-hidden="true">👤</span>
+                    <span className="font-medium">
+                      {selectedEvent.attendees?.length ?? 0} Volunteers Joining
+                    </span>
+                  </p>
+
+                  <div className="mt-3 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsDownloadModalOpen(true)}
+                      className="flex items-center justify-center rounded-full border border-purple-200 bg-white px-4 py-2 text-sm font-semibold text-purple-700 shadow-sm transition-colors duration-200 hover:bg-purple-50"
+                    >
+                      View Instructions
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleJoin(selectedEvent.id)}
+                      className={`rounded-full px-6 py-2 text-sm font-bold shadow-md transition-colors duration-200 ${
+                        selectedEvent.attendees?.includes(currentUserId)
+                          ? "border border-green-300 bg-green-100 text-green-800 hover:bg-green-50"
+                          : "bg-purple-600 text-white hover:bg-purple-700"
+                      }`}
+                    >
+                      {selectedEvent.attendees?.includes(currentUserId)
+                        ? "Joined ✅"
+                        : "Join Event"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadFlyer}
+                      disabled={flyerLoading}
+                      className="flex items-center justify-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-60"
+                    >
+                      {flyerLoading ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          Generating...
+                        </>
+                      ) : (
+                        "Download Area Flyer"
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsPosterModalOpen(true)}
+                      className="flex items-center justify-center rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-900 shadow-md transition-colors duration-200 hover:bg-amber-400"
+                    >
+                      Poster Added
+                    </button>
+                  </div>
+
+                  <div className="mt-4 border-t border-slate-100 pt-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      {new Date(selectedEvent.date).toLocaleString("en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </p>
+
+                    {selectedEvent.organizerName && (
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        Organizer:{" "}
+                        <span className="font-medium text-slate-800">
+                          {selectedEvent.organizerName}
+                        </span>
+                      </p>
+                    )}
+
+                    {selectedEvent.organization && (
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        Organization:{" "}
+                        <span className="font-medium text-slate-800">
+                          {selectedEvent.organization}
+                        </span>
+                      </p>
+                    )}
+
+                    <p className="mt-1 text-xs text-slate-600">
+                      {selectedEvent.address}
+                    </p>
+
+                    <p className="mt-1 text-[11px] font-medium text-amber-700">
+                      {selectedEvent.spotsRemaining} spots left
+                    </p>
+
+                    <p className="mt-2 text-xs leading-relaxed text-slate-700">
+                      {selectedEvent.description}
+                    </p>
+
+                    {flyerError && (
+                      <p className="mt-2 text-xs font-medium text-red-600" role="alert">
+                        {flyerError}
+                      </p>
+                    )}
+
+                    {flyerSuccess && (
+                      <p
+                        className="mt-2 text-xs font-medium text-emerald-700"
+                        role="status"
+                      >
+                        {flyerSuccess}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border-2 border-dashed border-yellow-200 bg-amber-50 p-6 text-center">
+                  <p className="text-sm font-medium text-slate-700">
+                    🍋 Tap a lemon on the map or select an event below to see details
+                    and join!
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-8 pt-2">
+              <div className="space-y-3">
+                {events.map((event) => {
+                  const isActive = event.id === selectedEventId;
+
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={() => setSelectedEventId(event.id)}
+                      className={`w-full rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
+                        isActive
+                          ? "border-purple-500 bg-purple-50/70"
+                          : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-sm font-semibold text-slate-800">
+                            {event.title}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {new Date(event.date).toLocaleString("en-US", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </p>
+                          <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">
+                            {event.address}
+                          </p>
+                          <p className="mt-1 text-[11px] font-medium text-amber-700">
+                            Hosted by {event.organizerName} · {event.spotsRemaining} spots
+                            left
+                          </p>
+                        </div>
+
+                        <span
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-base shadow-sm"
+                          aria-hidden="true"
+                        >
+                          🍋
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {events.length === 0 && (
+                <p className="py-4 text-center text-xs text-slate-500">
+                  No events yet. Be the first to create one in the Organizer Hub.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-green-900/5 p-3 shadow-inner ring-1 ring-green-800/10">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-3xl bg-stone-50 shadow-md ring-1 ring-green-900/10">
+              <VolunteerMap
+                events={events}
+                selectedEventId={selectedEventId}
+                onSelectEvent={handleSelectEvent}
+              />
+            </div>
+          </section>
+        </div>
       </main>
+
+      {isPosterModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+              Poster Check
+            </p>
+            <h2 className="mt-2 text-xl font-bold text-slate-800">
+              Confirm poster upload
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Are you sure you uploaded the flyer poster? Confirm your location and
+              picture to add poster credit and award points.
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setIsPosterModalOpen(false)}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handlePosterAdded}
+                className="rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-900 shadow-md transition-colors duration-200 hover:bg-amber-400"
+              >
+                Yes, Award points
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDownloadModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/55 px-4 py-4">
+          <div className="flex min-h-full items-center justify-center">
+            <div className="flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-4 py-4 md:px-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-purple-700">
+                    Flyer Tutorial
+                  </p>
+                  <h2 className="mt-2 text-xl font-bold text-slate-800">
+                    How to use your downloaded flyer
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Keep this guide open as a quick reference while you volunteer.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDownloadModalOpen(false)}
+                  className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-3 md:p-4">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <img
+                    src={FLYER_TUTORIAL_IMAGE_SRC}
+                    alt="Flyer tutorial guide"
+                    className="h-auto w-full object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

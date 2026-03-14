@@ -5,7 +5,9 @@ import { VolunteerMap } from "./VolunteerMap";
 import { EventPanel } from "./EventPanel";
 import type { FlyeringEvent, NewEventFormData } from "@/types/events";
 
-const generateId = () => `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function generateId() {
+  return `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export function Dashboard() {
   const [events, setEvents] = useState<FlyeringEvent[]>([]);
@@ -37,11 +39,12 @@ export function Dashboard() {
       lat: data.lat,
       lng: data.lng,
       date: data.date,
+      attendees: [],
       organizerName: "You",
       spotsRemaining: 10,
-      attendees: [],
       organization: (data.organization ?? "").trim(),
     };
+
     setEvents((prev) => [newEvent, ...prev]);
     setSelectedEventId(newEvent.id);
   }, []);
@@ -80,8 +83,9 @@ export function Dashboard() {
             />
           </div>
         </section>
-        <aside className="w-full shrink-0 md:w-[380px] h-full">
-          <div className="h-full rounded-3xl bg-white/90 shadow-md ring-1 ring-yellow-200/80 overflow-y-auto">
+
+        <aside className="h-full w-full shrink-0 md:w-[380px]">
+          <div className="h-full overflow-y-auto rounded-3xl bg-white/90 shadow-md ring-1 ring-yellow-200/80">
             <EventPanel
               selectedEvent={selectedEvent}
               onClearSelection={() => setSelectedEventId(null)}

@@ -21,3 +21,22 @@ export interface NewEventFormData {
   description: string;
   organization?: string;
 }
+
+export interface NewFlyeringEvent {
+  title: string;
+  address: string;
+  description: string;
+  lat: number;
+  lng: number;
+  date: string;
+  organizerName?: string;
+  spotsRemaining?: number;
+}
+
+export interface UserScore {
+  userId: string;
+  name: string;
+  points: number;
+  flyersPosted: number;
+  eventsJoined: number;
+}
