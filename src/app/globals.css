@@ -38,3 +38,36 @@
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;
 }
+
+/* Map popup: friendly single container, room for close button */
+.volunteer-event-popup.mapboxgl-popup {
+  overflow: hidden;
+}
+.volunteer-event-popup .mapboxgl-popup-content {
+  min-width: 220px;
+  padding: 14px 40px 14px 16px; /* extra right so X doesn't sit on text */
+  background: linear-gradient(to bottom, #fffbeb, #fefce8);
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  border: 1px solid rgb(253 224 71 / 0.4);
+}
+.volunteer-event-popup .mapboxgl-popup-close-button {
+  font-size: 20px;
+  padding: 6px 10px;
+  line-height: 1;
+  top: 6px;
+  right: 4px;
+  color: #78716c;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  outline: none;
+}
+.volunteer-event-popup .mapboxgl-popup-close-button:hover {
+  color: #1c1917;
+  background: rgb(0 0 0 / 0.06);
+}
+.volunteer-event-popup .mapboxgl-popup-close-button:focus {
+  outline: none;
+  box-shadow: none;
+}

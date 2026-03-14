@@ -123,24 +123,19 @@ export function VolunteerMap({
             anchor="bottom"
             className="volunteer-event-popup"
           >
-            <div className="min-w-[220px] rounded-2xl bg-white/95 p-3 shadow-md ring-1 ring-yellow-100">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-green-900">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-300 text-xs shadow">
-                  🍋
-                </span>
-                <span className="line-clamp-2">{popupEvent.title}</span>
-              </h3>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wide text-green-700/80">
-                {new Date(popupEvent.date).toLocaleString("en-US", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>
-              <p className="mt-1 line-clamp-3 text-[11px] text-slate-700">
-                {popupEvent.description}
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-green-900 line-clamp-2">
+              {popupEvent.title}
+            </h3>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-green-700/80">
+              {new Date(popupEvent.start_time).toLocaleString("en-US", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>
+            <p className="mt-1 line-clamp-3 text-[11px] text-slate-700">
+              {popupEvent.description}
+            </p>
           </Popup>
         )}
       </Map>
