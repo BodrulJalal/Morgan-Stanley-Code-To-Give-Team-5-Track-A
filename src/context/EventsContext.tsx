@@ -19,14 +19,15 @@ export type FlyeringEvent = {
   lng: number;
   date: string;
   attendees: string[];
-   organizerName: string;
-   spotsRemaining: number;
+  organizerName: string;
+  spotsRemaining: number;
+  organization: string;
 };
 
 type EventsContextValue = {
   events: FlyeringEvent[];
   addEvent: (
-    event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining">
+    event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining" | "organization"> & { organization?: string }
   ) => FlyeringEvent;
   toggleJoin: (eventId: string, userId: string) => void;
 };
@@ -48,6 +49,7 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     attendees: [],
     organizerName: "Neighborhood organizer",
     spotsRemaining: 8,
+    organization: "",
   },
   {
     id: "evt-jackson-heights",
@@ -61,6 +63,7 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     attendees: [],
     organizerName: "Neighborhood organizer",
     spotsRemaining: 12,
+    organization: "",
   },
   {
     id: "evt-grand-concourse",
@@ -74,6 +77,7 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     attendees: [],
     organizerName: "Neighborhood organizer",
     spotsRemaining: 10,
+    organization: "",
   },
 ];
 
@@ -91,14 +95,12 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
         const withAttendees = (parsed as Partial<FlyeringEvent>[]).map((event) => ({
-          attendees: [],
-          organizerName: "Neighborhood organizer",
-          spotsRemaining: 10,
           ...event,
           attendees: Array.isArray(event.attendees) ? event.attendees : [],
           organizerName: event.organizerName ?? "Neighborhood organizer",
           spotsRemaining:
             typeof event.spotsRemaining === "number" ? event.spotsRemaining : 10,
+          organization: typeof event.organization === "string" ? event.organization : "",
         }));
         setEvents(withAttendees as FlyeringEvent[]);
       }
@@ -118,15 +120,16 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const addEvent = useCallback(
     (
-      event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining">
+      event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining" | "organization"> & { organization?: string }
     ): FlyeringEvent => {
-    const id = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const id = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const newEvent: FlyeringEvent = {
         id,
         attendees: [],
         organizerName: "Neighborhood organizer",
         spotsRemaining: 10,
         ...event,
+        organization: event.organization?.trim() ?? "",
       };
       setEvents((prev) => [newEvent, ...prev]);
       return newEvent;

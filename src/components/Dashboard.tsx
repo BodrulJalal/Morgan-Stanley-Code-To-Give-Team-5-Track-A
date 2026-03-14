@@ -40,6 +40,7 @@ export function Dashboard() {
       organizerName: "You",
       spotsRemaining: 10,
       attendees: [],
+      organization: (data.organization ?? "").trim(),
     };
     setEvents((prev) => [newEvent, ...prev]);
     setSelectedEventId(newEvent.id);
