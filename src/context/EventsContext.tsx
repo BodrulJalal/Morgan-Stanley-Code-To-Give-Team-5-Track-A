@@ -18,12 +18,18 @@ export type FlyeringEvent = {
   lat: number;
   lng: number;
   date: string;
+  attendees: string[];
+  organizerName: string;
+  spotsRemaining: number;
+  organization: string;
 };
 
 type EventsContextValue = {
   events: FlyeringEvent[];
-  addEvent: (event: Omit<FlyeringEvent, "id">) => FlyeringEvent;
-  currentUserId: string;
+  addEvent: (
+    event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining" | "organization"> & { organization?: string }
+  ) => FlyeringEvent;
+  toggleJoin: (eventId: string, userId: string) => void;
 };
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
@@ -40,6 +46,10 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     lat: 40.7359,
     lng: -73.9911,
     date: "2026-03-20T17:30:00",
+    attendees: [],
+    organizerName: "Neighborhood organizer",
+    spotsRemaining: 8,
+    organization: "",
   },
   {
     id: "evt-jackson-heights",
@@ -50,6 +60,10 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     lat: 40.7463,
     lng: -73.891,
     date: "2026-03-21T11:00:00",
+    attendees: [],
+    organizerName: "Neighborhood organizer",
+    spotsRemaining: 12,
+    organization: "",
   },
   {
     id: "evt-grand-concourse",
@@ -60,6 +74,10 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     lat: 40.8184,
     lng: -73.927,
     date: "2026-03-22T13:00:00",
+    attendees: [],
+    organizerName: "Neighborhood organizer",
+    spotsRemaining: 10,
+    organization: "",
   },
 ];
 
@@ -76,7 +94,15 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       }
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
-        setEvents(parsed as FlyeringEvent[]);
+        const withAttendees = (parsed as Partial<FlyeringEvent>[]).map((event) => ({
+          ...event,
+          attendees: Array.isArray(event.attendees) ? event.attendees : [],
+          organizerName: event.organizerName ?? "Neighborhood organizer",
+          spotsRemaining:
+            typeof event.spotsRemaining === "number" ? event.spotsRemaining : 10,
+          organization: typeof event.organization === "string" ? event.organization : "",
+        }));
+        setEvents(withAttendees as FlyeringEvent[]);
       }
     } catch {
       // ignore read errors and fall back to in-memory state
@@ -92,20 +118,49 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     }
   }, [events]);
 
-  const addEvent = useCallback((event: Omit<FlyeringEvent, "id">): FlyeringEvent => {
-    const id = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const newEvent: FlyeringEvent = { id, ...event };
-    setEvents((prev) => [newEvent, ...prev]);
-    return newEvent;
+  const addEvent = useCallback(
+    (
+      event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining" | "organization"> & { organization?: string }
+    ): FlyeringEvent => {
+      const id = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const newEvent: FlyeringEvent = {
+        id,
+        attendees: [],
+        organizerName: "Neighborhood organizer",
+        spotsRemaining: 10,
+        ...event,
+        organization: event.organization?.trim() ?? "",
+      };
+      setEvents((prev) => [newEvent, ...prev]);
+      return newEvent;
+    },
+    []
+  );
+
+  const toggleJoin = useCallback((eventId: string, userId: string) => {
+    setEvents((prev) =>
+      prev.map((event) => {
+        if (event.id !== eventId) return event;
+        const attendees = Array.isArray(event.attendees) ? event.attendees : [];
+        const isJoined = attendees.includes(userId);
+        const nextAttendees = isJoined
+          ? attendees.filter((id) => id !== userId)
+          : [...attendees, userId];
+        return {
+          ...event,
+          attendees: nextAttendees,
+        };
+      })
+    );
   }, []);
 
   const value = useMemo<EventsContextValue>(
     () => ({
       events,
       addEvent,
-      currentUserId: "demo-volunteer-123",
+      toggleJoin,
     }),
-    [events, addEvent]
+    [events, addEvent, toggleJoin]
   );
 
   return <EventsContext.Provider value={value}>{children}</EventsContext.Provider>;

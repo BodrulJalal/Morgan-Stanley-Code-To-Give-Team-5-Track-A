@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#FCF8F2] text-slate-800`}
+        className={`${geistSans.variable} ${geistMono.variable} h-screen overflow-hidden antialiased bg-[#FCF8F2] text-slate-800`}
       >
         <EventsProvider>{children}</EventsProvider>
       </body>

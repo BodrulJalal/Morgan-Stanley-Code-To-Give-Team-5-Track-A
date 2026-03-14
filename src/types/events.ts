@@ -8,6 +8,8 @@ export interface FlyeringEvent {
   date: string;
   organizerName: string;
   spotsRemaining: number;
+  attendees: string[];
+  organization: string;
 }
 
 export interface NewEventFormData {
@@ -17,4 +19,5 @@ export interface NewEventFormData {
   lng: number;
   date: string;
   description: string;
+  organization?: string;
 }

@@ -75,7 +75,7 @@ export function VolunteerMap({
   }
 
   return (
-    <div className="h-full w-full overflow-hidden rounded-3xl border border-yellow-200/80 bg-stone-50 shadow-inner">
+    <div className="absolute inset-0 h-full w-full overflow-hidden rounded-3xl border border-yellow-200/80 bg-stone-50 shadow-inner">
       <Map
         ref={mapRef}
         mapboxAccessToken={mapboxToken}
@@ -84,7 +84,7 @@ export function VolunteerMap({
           zoom: INITIAL_ZOOM,
         }}
         style={{ width: "100%", height: "100%", borderRadius: "1.5rem" }}
-        mapStyle="mapbox://styles/mapbox/outdoors-v12"
+        mapStyle="mapbox://styles/zjeon/cmmqqbavl00bk01qt0gf70lia"
         styleDiffing={false}
       >
         {events.map((event) => (
