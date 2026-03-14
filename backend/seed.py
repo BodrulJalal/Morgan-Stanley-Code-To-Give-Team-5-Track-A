@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from faker import Faker
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from locations import nyc
 
 fake = Faker()
 load_dotenv()
@@ -24,7 +25,7 @@ def seed_users (count: int) -> list[str]:
 
 	for _ in range (count): 
 		email = fake.unique.email()
-		result = supbase.auth.admin.create_user (
+		result = supabase.auth.admin.create_user (
 			{
 				"email": email, 
 				"password": "morganstanleyhackathon", 
@@ -46,14 +47,63 @@ def seed_users (count: int) -> list[str]:
 		).eq("id", uid).execute()
 
 		print (f" User -> [{email}, {uid}]")
-		return user_ids
+	return user_ids
 
 
 def seed_events (user_ids: list[str], count: int) -> list[str]:
-	pass
+	print(f"Creating {count} fake (realistic) events")
+	locations, event_ids = nyc, []
 
+	for idx in range (count):
+		location_name, base_lat, base_long = random.choice(locations)
+
+		lat = base_lat + random.uniform(-0.005, 0.005)
+		long = base_long + random.uniform(-0.005, 0.005)
+
+		start_dt = datetime.now(timezone.utc) + timedelta(
+			days = random.randint(0, 30),
+			hours = random.randint(8, 18),
+		)
+
+		end_dt = start_dt + timedelta (hours = random.randint(1, 4))
+ 
+		organizer = random.choice(["Community Food Bank", "Local Church", "Neighborhood Association",
+								   "School District", "City Partnership", "Volunteer Network"])
+
+		payload = {
+			"title": f"{fake.bs().title()} Food Drive",
+			"description": fake.paragraph(nb_sentences=3),
+			"address": f"{fake.building_number()} {fake.street_name()}, {location_name}, NY",
+			"city": location_name,
+			"lat": round(lat, 6),
+			"lng": round(long, 6),
+			"start_time": start_dt.isoformat(),
+			"end_time": end_dt.isoformat(),
+			"organizer_name": organizer,
+			"created_by_user_id": random.choice(user_ids),
+        }
+ 
+		result = supabase.table("events").insert(payload).execute()
+		event_id = result.data[0]["id"]
+		event_ids.append(event_id)
+
+		print(f" Event '{payload['title']}' @ {payload['address']}")
+		
+	return event_ids 
+	
 def seed_attendees (user_ids: list[str], event_ids: list[str]) -> None: 
-	pass
+	print(f"Assigning attendees...")
+	rows = []
+
+	for event_id in event_ids:
+		attendee_count = random.randint(1, min(8, len(user_ids)))
+		attendees = random.sample(user_ids, attendee_count)
+		for uid in attendees:
+			rows.append({"event_id": event_id, "user_id": uid})
+
+	# Upsert handles the unique constraint gracefully if you run seed more than once
+	supabase.table("event_attendees").upsert(rows, on_conflict="event_id, user_id").execute()
+	print(f" {len(rows)} attendee assignments created")
 
 def main ():
 	parser = argparse.ArgumentParser(description="Seed the Lemontree DB")
