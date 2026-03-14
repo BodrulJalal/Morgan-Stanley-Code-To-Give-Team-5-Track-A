@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Map, { Marker, Popup, type MarkerEvent, type MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { FlyeringEvent } from "@/types/events";
@@ -43,22 +43,6 @@ export function VolunteerMap({
 }: VolunteerMapProps) {
   const mapRef = useRef<MapRef | null>(null);
   const [popupEventId, setPopupEventId] = useState<string | null>(selectedEventId);
-
-  useEffect(() => {
-    setPopupEventId(selectedEventId);
-
-    if (!selectedEventId) {
-      return;
-    }
-
-    const selectedEvent = events.find((event) => event.id === selectedEventId);
-    if (!selectedEvent) {
-      return;
-    }
-
-    const center: [number, number] = [selectedEvent.lng, selectedEvent.lat];
-    mapRef.current?.flyTo({ center, zoom: 13 });
-  }, [events, selectedEventId]);
 
   const handleMarkerClick = useCallback(
     (e: MarkerEvent<MouseEvent>, event: FlyeringEvent) => {

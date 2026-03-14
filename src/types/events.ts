@@ -18,23 +18,3 @@ export interface NewEventFormData {
   date: string;
   description: string;
 }
-
-export interface NewFlyeringEvent {
-  title: string;
-  address: string;
-  description: string;
-  lat: number;
-  lng: number;
-  date: string;
-  organizerName?: string;
-  spotsRemaining?: number;
-}
-
-export interface UserScore {
-  userId: string;
-  name: string;
-  flyersPosted: number;
-  eventsJoined: number;
-  joinedEventIds: string[];
-  points: number;
-}
