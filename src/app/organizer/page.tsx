@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useEvents } from "@/context/EventsContext";
@@ -125,12 +126,12 @@ export default function OrganizerPage() {
             </p>
           </div>
         </div>
-        <a
+        <Link
           href="/"
           className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
         >
           Back to Explorer
-        </a>
+        </Link>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-8 md:px-6">

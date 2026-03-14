@@ -17,17 +17,6 @@ export function Dashboard() {
     setSelectedEventId(event?.id ?? null);
   }, []);
 
-  const handleRSVP = useCallback((event: FlyeringEvent) => {
-    setSelectedEventId(event.id);
-    if (event.spotsRemaining > 0) {
-      setEvents((prev) =>
-        prev.map((e) =>
-          e.id === event.id ? { ...e, spotsRemaining: e.spotsRemaining - 1 } : e
-        )
-      );
-    }
-  }, []);
-
   const handleCreateEvent = useCallback((data: NewEventFormData) => {
     const newEvent: FlyeringEvent = {
       id: generateId(),
