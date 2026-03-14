@@ -128,7 +128,7 @@ export function EventPanel({
                 {selectedEvent.title}
               </h3>
               <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                {new Date(selectedEvent.date).toLocaleString(undefined, {
+                {new Date(selectedEvent.date).toLocaleString("en-US", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}

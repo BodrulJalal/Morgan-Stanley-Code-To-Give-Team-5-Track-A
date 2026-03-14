@@ -94,7 +94,7 @@ export function VolunteerExplorer() {
                         {event.title}
                       </h3>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {new Date(event.date).toLocaleString(undefined, {
+                        {new Date(event.date).toLocaleString("en-US", {
                           dateStyle: "medium",
                           timeStyle: "short",
                         })}
