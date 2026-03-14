@@ -1,16 +1,43 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import Link from "next/link";
+import { useState, useCallback, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
 import { VolunteerMap } from "./VolunteerMap";
 import { downloadAreaFlyer } from "@/lib/downloadFlyer";
+import { supabase } from "@/lib/supabase/client";
 
 export function VolunteerExplorer() {
   const { events, toggleJoin } = useEvents();
-  const currentUserId = "vol_123";
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [flyerLoading, setFlyerLoading] = useState(false);
   const [flyerError, setFlyerError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const currentUserId = authUser?.id ?? "vol_123";
+
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!isMounted) return;
+      setAuthUser(data.user ?? null);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((e) => e.id === selectedEventId) ?? null;
@@ -43,6 +70,10 @@ export function VolunteerExplorer() {
     [toggleJoin, currentUserId]
   );
 
+  const handleSignOut = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-amber-50">
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
@@ -62,18 +93,43 @@ export function VolunteerExplorer() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a
+          {authLoading ? (
+            <span className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-600 shadow-md">
+              Checking session...
+            </span>
+          ) : authUser ? (
+            <>
+              <span className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md">
+                Signed in as {authUser.email ?? "user"}
+              </span>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-slate-50"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Sign In
+            </Link>
+          )}
+          <Link
             href="/admin"
             className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
           >
             Admin Page (developmental, will be removed)
-          </a>
-          <a
+          </Link>
+          <Link
             href="/organizer"
             className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
           >
             Create Event
-          </a>
+          </Link>
         </div>
       </header>
 

@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { useEvents } from "@/context/EventsContext";
+import { supabase } from "@/lib/supabase/client";
 
 function toDatetimeLocal(d: Date) {
   const y = d.getFullYear();
@@ -16,6 +19,8 @@ function toDatetimeLocal(d: Date) {
 export default function OrganizerPage() {
   const { addEvent } = useEvents();
   const router = useRouter();
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [form, setForm] = useState({
     title: "",
     address: "",
@@ -40,6 +45,33 @@ export default function OrganizerPage() {
     maxDate.setFullYear(maxDate.getFullYear() + 10);
     setMaxDatetime(toDatetimeLocal(maxDate));
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!isMounted) return;
+      setAuthUser(data.user ?? null);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.refresh();
+  }, [router]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -125,12 +157,39 @@ export default function OrganizerPage() {
             </p>
           </div>
         </div>
-        <a
-          href="/"
-          className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
-        >
-          Back to Explorer
-        </a>
+        <div className="flex items-center gap-2">
+          {authLoading ? (
+            <span className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-600 shadow-md">
+              Checking session...
+            </span>
+          ) : authUser ? (
+            <>
+              <span className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md">
+                Signed in as {authUser.email ?? "user"}
+              </span>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-slate-50"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login?next=/organizer"
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Sign In
+            </Link>
+          )}
+          <Link
+            href="/"
+            className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
+          >
+            Back to Explorer
+          </Link>
+        </div>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-8 md:px-6">
