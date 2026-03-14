@@ -20,9 +20,11 @@ export function VolunteerExplorer() {
   }, [refetch]);
 
   const filteredEvents = useMemo(() => {
+    const now = new Date();
+    const futureEvents = events.filter((e) => new Date(e.start_time) > now);
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return events;
-    return events.filter(
+    if (!q) return futureEvents;
+    return futureEvents.filter(
       (e) =>
         e.title.toLowerCase().includes(q) ||
         (e.address?.toLowerCase().includes(q)) ||
@@ -268,7 +270,9 @@ export function VolunteerExplorer() {
                   <p className="py-4 text-center text-xs text-slate-500">
                     {events.length === 0
                       ? "No events yet. Be the first to create one in the Organizer Hub."
-                      : "No events match your search. Try a different term."}
+                      : !events.some((e) => new Date(e.start_time) > new Date())
+                        ? "No upcoming events right now."
+                        : "No events match your search. Try a different term."}
                   </p>
                 )}
               </div>
