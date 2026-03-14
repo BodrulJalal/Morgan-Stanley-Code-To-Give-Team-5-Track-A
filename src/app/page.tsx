@@ -1,5 +1,5 @@
-import { Dashboard } from "@/components/Dashboard";
+import { VolunteerExplorer } from "@/components/VolunteerExplorer";
 
 export default function Home() {
-  return <Dashboard />;
+  return <VolunteerExplorer />;
 }

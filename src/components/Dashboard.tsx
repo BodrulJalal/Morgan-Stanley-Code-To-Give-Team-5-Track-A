@@ -77,7 +77,6 @@ export function Dashboard() {
               events={events}
               selectedEventId={selectedEventId}
               onSelectEvent={handleSelectEvent}
-              onRSVP={handleRSVP}
             />
           </div>
         </section>

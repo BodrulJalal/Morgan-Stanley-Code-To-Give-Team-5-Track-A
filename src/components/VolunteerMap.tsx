@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import Map, { Marker, Popup, type MarkerEvent } from "react-map-gl/mapbox";
+import { useCallback, useRef, useState } from "react";
+import Map, { Marker, Popup, type MarkerEvent, type MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { FlyeringEvent } from "@/types/events";
 
@@ -12,7 +12,6 @@ type VolunteerMapProps = {
   events: FlyeringEvent[];
   selectedEventId: string | null;
   onSelectEvent: (event: FlyeringEvent | null) => void;
-  onRSVP?: (event: FlyeringEvent) => void;
 };
 
 function EventPin({ hasSpots }: { hasSpots: boolean }) {
@@ -41,15 +40,17 @@ export function VolunteerMap({
   events,
   selectedEventId,
   onSelectEvent,
-  onRSVP,
 }: VolunteerMapProps) {
-  const [popupEventId, setPopupEventId] = useState<string | null>(null);
+  const mapRef = useRef<MapRef | null>(null);
+  const [popupEventId, setPopupEventId] = useState<string | null>(selectedEventId);
 
   const handleMarkerClick = useCallback(
     (e: MarkerEvent<MouseEvent>, event: FlyeringEvent) => {
       e.originalEvent?.stopPropagation();
       setPopupEventId(event.id);
       onSelectEvent(event);
+      const center: [number, number] = [event.lng, event.lat];
+      mapRef.current?.flyTo({ center, zoom: 13 });
     },
     [onSelectEvent]
   );
@@ -76,13 +77,14 @@ export function VolunteerMap({
   return (
     <div className="h-full w-full overflow-hidden rounded-3xl border border-yellow-200/80 bg-stone-50 shadow-inner">
       <Map
+        ref={mapRef}
         mapboxAccessToken={mapboxToken}
         initialViewState={{
           ...NYC_CENTER,
           zoom: INITIAL_ZOOM,
         }}
         style={{ width: "100%", height: "100%", borderRadius: "1.5rem" }}
-        mapStyle="mapbox://styles/mapbox/streets-v12"
+        mapStyle="mapbox://styles/mapbox/outdoors-v12"
         styleDiffing={false}
       >
         {events.map((event) => (
@@ -121,31 +123,10 @@ export function VolunteerMap({
                   timeStyle: "short",
                 })}
               </p>
-              <p className="text-xs text-green-800/80">Host: {popupEvent.organizerName}</p>
               <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>
               <p className="mt-1 line-clamp-3 text-[11px] text-slate-700">
                 {popupEvent.description}
               </p>
-              <p className="mt-1 text-sm">
-                {popupEvent.spotsRemaining > 0 ? (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                    {popupEvent.spotsRemaining} spots left
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                    Fully booked
-                  </span>
-                )}
-              </p>
-              {onRSVP && popupEvent.spotsRemaining > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onRSVP(popupEvent)}
-                  className="mt-3 w-full rounded-full bg-yellow-400 px-3 py-2 text-xs font-semibold text-green-900 shadow-md transition-shadow duration-200 hover:bg-yellow-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-offset-2 focus:ring-offset-yellow-100"
-                >
-                  RSVP
-                </button>
-              )}
             </div>
           </Popup>
         )}
