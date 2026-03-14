@@ -289,7 +289,7 @@ export function VolunteerExplorer() {
                 onClick={handlePosterAdded}
                 className="rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-900 shadow-md transition-colors duration-200 hover:bg-amber-400"
               >
-                Yes, award points
+                Yes, Award points
               </button>
             </div>
           </div>
