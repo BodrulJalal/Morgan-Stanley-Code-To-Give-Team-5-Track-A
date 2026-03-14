@@ -91,7 +91,7 @@ export function VolunteerMap({
   }
 
   return (
-    <div className="h-full w-full overflow-hidden rounded-3xl border border-yellow-200/80 bg-stone-50 shadow-inner">
+    <div className="absolute inset-0 h-full w-full overflow-hidden rounded-3xl border border-yellow-200/80 bg-stone-50 shadow-inner">
       <Map
         ref={mapRef}
         mapboxAccessToken={mapboxToken}

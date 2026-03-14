@@ -42,7 +42,9 @@ export function Dashboard() {
       attendees: [],
       organizerName: "You",
       spotsRemaining: 10,
+      organization: (data.organization ?? "").trim(),
     };
+
     setEvents((prev) => [newEvent, ...prev]);
     setSelectedEventId(newEvent.id);
   }, []);
@@ -81,8 +83,9 @@ export function Dashboard() {
             />
           </div>
         </section>
-        <aside className="w-full shrink-0 md:w-[380px] h-full">
-          <div className="h-full rounded-3xl bg-white/90 shadow-md ring-1 ring-yellow-200/80 overflow-y-auto">
+
+        <aside className="h-full w-full shrink-0 md:w-[380px]">
+          <div className="h-full overflow-y-auto rounded-3xl bg-white/90 shadow-md ring-1 ring-yellow-200/80">
             <EventPanel
               selectedEvent={selectedEvent}
               onClearSelection={() => setSelectedEventId(null)}

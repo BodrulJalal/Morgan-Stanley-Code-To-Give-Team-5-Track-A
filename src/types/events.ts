@@ -9,6 +9,7 @@ export interface FlyeringEvent {
   organizerName: string;
   spotsRemaining: number;
   attendees: string[];
+  organization: string;
 }
 
 export interface NewEventFormData {
@@ -18,6 +19,7 @@ export interface NewEventFormData {
   lng: number;
   date: string;
   description: string;
+  organization?: string;
 }
 
 export interface NewFlyeringEvent {

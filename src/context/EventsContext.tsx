@@ -42,6 +42,7 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     attendees: [],
     organizerName: "Neighborhood organizer",
     spotsRemaining: 8,
+    organization: "",
   },
   {
     id: "evt-jackson-heights",
@@ -55,6 +56,7 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     attendees: [],
     organizerName: "Neighborhood organizer",
     spotsRemaining: 12,
+    organization: "",
   },
   {
     id: "evt-grand-concourse",
@@ -68,6 +70,7 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     attendees: [],
     organizerName: "Neighborhood organizer",
     spotsRemaining: 10,
+    organization: "",
   },
 ];
 
@@ -93,6 +96,23 @@ function ensureCurrentUser(scoreboard: UserScore[]) {
   return sortScoreboard([...scoreboard, INITIAL_SCOREBOARD[0]]);
 }
 
+function normalizeEvent(event: Partial<FlyeringEvent>): FlyeringEvent {
+  return {
+    id: event.id ?? `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: event.title ?? "",
+    description: event.description ?? "",
+    address: event.address ?? "",
+    lat: typeof event.lat === "number" ? event.lat : 0,
+    lng: typeof event.lng === "number" ? event.lng : 0,
+    date: event.date ?? new Date().toISOString(),
+    attendees: Array.isArray(event.attendees) ? event.attendees : [],
+    organizerName: event.organizerName ?? "Neighborhood organizer",
+    spotsRemaining:
+      typeof event.spotsRemaining === "number" ? event.spotsRemaining : 10,
+    organization: typeof event.organization === "string" ? event.organization : "",
+  };
+}
+
 export function EventsProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<FlyeringEvent[]>(INITIAL_EVENTS);
   const [scoreboard, setScoreboard] = useState<UserScore[]>(
@@ -101,15 +121,17 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_EVENTS));
         return;
       }
+
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
-        setEvents(parsed as FlyeringEvent[]);
+        setEvents((parsed as Partial<FlyeringEvent>[]).map(normalizeEvent));
       }
     } catch {
       // ignore read errors and fall back to in-memory state
@@ -118,15 +140,17 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
     } catch {
-      // ignore write errors (e.g. storage full or disabled)
+      // ignore write errors
     }
   }, [events]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     try {
       const raw = window.localStorage.getItem(SCOREBOARD_STORAGE_KEY);
       if (!raw) {
@@ -136,24 +160,26 @@ export function EventsProvider({ children }: { children: ReactNode }) {
         );
         return;
       }
+
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
         setScoreboard(ensureCurrentUser(parsed as UserScore[]));
       }
     } catch {
-      // Ignore read errors and fall back to in-memory state.
+      // ignore read errors and fall back to in-memory state
     }
   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     try {
       window.localStorage.setItem(
         SCOREBOARD_STORAGE_KEY,
         JSON.stringify(sortScoreboard(scoreboard))
       );
     } catch {
-      // Ignore write errors (for example, if storage is disabled).
+      // ignore write errors
     }
   }, [scoreboard]);
 
@@ -161,9 +187,12 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     (updater: (current: UserScore) => UserScore) => {
       setScoreboard((prev) => {
         const existing =
-          prev.find((entry) => entry.userId === CURRENT_USER_ID) ?? INITIAL_SCOREBOARD[0];
+          prev.find((entry) => entry.userId === CURRENT_USER_ID) ??
+          INITIAL_SCOREBOARD[0];
+
         const next = updater(existing);
         const others = prev.filter((entry) => entry.userId !== CURRENT_USER_ID);
+
         return sortScoreboard([...others, next]);
       });
     },
@@ -172,13 +201,21 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const addEvent = useCallback((event: NewFlyeringEvent): FlyeringEvent => {
     const id = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
     const newEvent: FlyeringEvent = {
       id,
+      title: event.title,
+      description: event.description,
+      address: event.address,
+      lat: event.lat,
+      lng: event.lng,
+      date: event.date,
       attendees: [],
-      organizerName: event.organizerName ?? CURRENT_USER_NAME,
+      organizerName: event.organizerName?.trim() || CURRENT_USER_NAME,
       spotsRemaining: event.spotsRemaining ?? 10,
-      ...event,
+      organization: event.organization?.trim() ?? "",
     };
+
     setEvents((prev) => [newEvent, ...prev]);
     return newEvent;
   }, []);
@@ -186,71 +223,85 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   const recordFlyerPosted = useCallback(() => {
     updateCurrentUserScore((current) => ({
       ...current,
-      points: current.points + 10,
+      points: (current.points ?? 0) + 10,
       flyersPosted: (current.flyersPosted ?? 0) + 1,
     }));
   }, [updateCurrentUserScore]);
 
-  const joinEvent = useCallback((eventId: string, userId: string) => {
-    const targetEvent = events.find((event) => event.id === eventId);
-    if (!targetEvent) return false;
+  const joinEvent = useCallback(
+    (eventId: string, userId: string) => {
+      const targetEvent = events.find((event) => event.id === eventId);
+      if (!targetEvent) return false;
 
-    const attendees = Array.isArray(targetEvent.attendees) ? targetEvent.attendees : [];
-    if (attendees.includes(userId)) return true;
-    if ((targetEvent.spotsRemaining ?? 0) <= 0) return false;
+      const attendees = Array.isArray(targetEvent.attendees)
+        ? targetEvent.attendees
+        : [];
 
-    setEvents((prev) =>
-      prev.map((event) => {
-        if (event.id !== eventId) return event;
-        return {
-          ...event,
-          attendees: [...(Array.isArray(event.attendees) ? event.attendees : []), userId],
-          spotsRemaining: Math.max((event.spotsRemaining ?? 1) - 1, 0),
-        };
-      })
-    );
+      if (attendees.includes(userId)) return true;
+      if ((targetEvent.spotsRemaining ?? 0) <= 0) return false;
 
-    if (userId === CURRENT_USER_ID) {
-      updateCurrentUserScore((current) => ({
-        ...current,
-        points: Math.max((current.points ?? 0) + 25, 0),
-        eventsJoined: (current.eventsJoined ?? 0) + 1,
-      }));
-    }
+      setEvents((prev) =>
+        prev.map((event) => {
+          if (event.id !== eventId) return event;
 
-    return true;
-  }, [events, updateCurrentUserScore]);
+          return {
+            ...event,
+            attendees: [...(Array.isArray(event.attendees) ? event.attendees : []), userId],
+            spotsRemaining: Math.max((event.spotsRemaining ?? 1) - 1, 0),
+          };
+        })
+      );
 
-  const leaveEvent = useCallback((eventId: string, userId: string) => {
-    const targetEvent = events.find((event) => event.id === eventId);
-    if (!targetEvent) return false;
+      if (userId === CURRENT_USER_ID) {
+        updateCurrentUserScore((current) => ({
+          ...current,
+          points: (current.points ?? 0) + 25,
+          eventsJoined: (current.eventsJoined ?? 0) + 1,
+        }));
+      }
 
-    const attendees = Array.isArray(targetEvent.attendees) ? targetEvent.attendees : [];
-    if (!attendees.includes(userId)) return false;
+      return true;
+    },
+    [events, updateCurrentUserScore]
+  );
 
-    setEvents((prev) =>
-      prev.map((event) => {
-        if (event.id !== eventId) return event;
-        return {
-          ...event,
-          attendees: (Array.isArray(event.attendees) ? event.attendees : []).filter(
-            (id) => id !== userId
-          ),
-          spotsRemaining: (event.spotsRemaining ?? 0) + 1,
-        };
-      })
-    );
+  const leaveEvent = useCallback(
+    (eventId: string, userId: string) => {
+      const targetEvent = events.find((event) => event.id === eventId);
+      if (!targetEvent) return false;
 
-    if (userId === CURRENT_USER_ID) {
-      updateCurrentUserScore((current) => ({
-        ...current,
-        points: Math.max((current.points ?? 0) - 25, 0),
-        eventsJoined: Math.max((current.eventsJoined ?? 0) - 1, 0),
-      }));
-    }
+      const attendees = Array.isArray(targetEvent.attendees)
+        ? targetEvent.attendees
+        : [];
 
-    return true;
-  }, [events, updateCurrentUserScore]);
+      if (!attendees.includes(userId)) return false;
+
+      setEvents((prev) =>
+        prev.map((event) => {
+          if (event.id !== eventId) return event;
+
+          return {
+            ...event,
+            attendees: (Array.isArray(event.attendees) ? event.attendees : []).filter(
+              (id) => id !== userId
+            ),
+            spotsRemaining: (event.spotsRemaining ?? 0) + 1,
+          };
+        })
+      );
+
+      if (userId === CURRENT_USER_ID) {
+        updateCurrentUserScore((current) => ({
+          ...current,
+          points: Math.max((current.points ?? 0) - 25, 0),
+          eventsJoined: Math.max((current.eventsJoined ?? 0) - 1, 0),
+        }));
+      }
+
+      return true;
+    },
+    [events, updateCurrentUserScore]
+  );
 
   const value = useMemo<EventsContextValue>(
     () => ({
