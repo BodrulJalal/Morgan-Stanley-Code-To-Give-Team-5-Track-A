@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
 import { VolunteerMap } from "./VolunteerMap";
 import { downloadAreaFlyer } from "@/lib/downloadFlyer";
@@ -10,6 +10,7 @@ export function VolunteerExplorer() {
   // Placeholder until Supabase Auth is integrated; replace with session.user.id
   const currentUserId = "00000000-0000-0000-0000-000000000001";
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [flyerLoading, setFlyerLoading] = useState(false);
   const [flyerError, setFlyerError] = useState<string | null>(null);
   const [joinLoadingId, setJoinLoadingId] = useState<string | null>(null);
@@ -17,6 +18,19 @@ export function VolunteerExplorer() {
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  const filteredEvents = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return events;
+    return events.filter(
+      (e) =>
+        e.title.toLowerCase().includes(q) ||
+        (e.address?.toLowerCase().includes(q)) ||
+        (e.description?.toLowerCase().includes(q)) ||
+        (e.organizer_name?.toLowerCase().includes(q)) ||
+        (e.city?.toLowerCase().includes(q))
+    );
+  }, [events, searchQuery]);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((e) => e.id === selectedEventId) ?? null;
@@ -98,6 +112,14 @@ export function VolunteerExplorer() {
             <p className="mt-0.5 text-xs text-slate-500">
               Tap a lemon to see details and download a flyer.
             </p>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search events…"
+              aria-label="Search events by title, address, organizer, or city"
+              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+            />
           </div>
 
           {/* Zone 1: Detail Stage (does not shrink) */}
@@ -206,7 +228,7 @@ export function VolunteerExplorer() {
               <p className="py-4 text-center text-xs text-slate-500">Loading events…</p>
             ) : (
               <div className="space-y-3">
-                {events.map((event) => {
+                {filteredEvents.map((event) => {
                   const isActive = event.id === selectedEventId;
                   return (
                     <button
@@ -234,19 +256,19 @@ export function VolunteerExplorer() {
                             {event.address}
                           </p>
                         </div>
-                        <span
-                          className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-300 text-base shadow-sm"
-                          aria-hidden="true"
-                        >
-                          🍋
+                        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                          <span aria-hidden="true">👥</span>
+                          {(event.attendees?.length ?? 0)}
                         </span>
                       </div>
                     </button>
                   );
                 })}
-                {events.length === 0 && (
+                {filteredEvents.length === 0 && (
                   <p className="py-4 text-center text-xs text-slate-500">
-                    No events yet. Be the first to create one in the Organizer Hub.
+                    {events.length === 0
+                      ? "No events yet. Be the first to create one in the Organizer Hub."
+                      : "No events match your search. Try a different term."}
                   </p>
                 )}
               </div>
@@ -258,7 +280,7 @@ export function VolunteerExplorer() {
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-green-900/5 p-3 shadow-inner ring-1 ring-green-800/10">
           <div className="relative min-h-0 flex-1 overflow-hidden rounded-3xl bg-stone-50 shadow-md ring-1 ring-green-900/10">
             <VolunteerMap
-              events={events}
+              events={filteredEvents}
               selectedEventId={selectedEventId}
               onSelectEvent={handleSelectEvent}
             />

@@ -40,6 +40,9 @@
 }
 
 /* Map popup: friendly single container, room for close button */
+.volunteer-event-popup.mapboxgl-popup {
+  overflow: hidden;
+}
 .volunteer-event-popup .mapboxgl-popup-content {
   min-width: 220px;
   padding: 14px 40px 14px 16px; /* extra right so X doesn't sit on text */
@@ -55,7 +58,16 @@
   top: 6px;
   right: 4px;
   color: #78716c;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  outline: none;
 }
 .volunteer-event-popup .mapboxgl-popup-close-button:hover {
   color: #1c1917;
+  background: rgb(0 0 0 / 0.06);
+}
+.volunteer-event-popup .mapboxgl-popup-close-button:focus {
+  outline: none;
+  box-shadow: none;
 }
