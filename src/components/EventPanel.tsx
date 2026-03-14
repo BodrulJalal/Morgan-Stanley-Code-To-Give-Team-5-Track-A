@@ -27,17 +27,16 @@ export function EventPanel({
   const [form, setForm] = useState<NewEventFormData>(initialForm);
   const [flyerLoading, setFlyerLoading] = useState(false);
   const [flyerError, setFlyerError] = useState<string | null>(null);
-  const [lastCreated, setLastCreated] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
-  const eventForFlyer = selectedEvent ?? lastCreated;
+  const eventForFlyer = selectedEvent ?? null;
 
   const handleDownloadFlyer = useCallback(async () => {
     if (!eventForFlyer) return;
     const lat = eventForFlyer.lat;
     const lng = eventForFlyer.lng;
-    const name = "title" in eventForFlyer ? eventForFlyer.title : eventForFlyer.name;
+    const name = eventForFlyer.title;
     const currentUserId = "demo-volunteer-123";
     setFlyerError(null);
     setFlyerLoading(true);
@@ -97,7 +96,6 @@ export function EventPanel({
           lng,
         };
 
-        setLastCreated({ name: form.eventName.trim(), lat, lng });
         onCreateEvent?.(payload);
         setForm(initialForm);
       } catch (err) {
@@ -110,8 +108,6 @@ export function EventPanel({
     },
     [form, initialForm, mapboxToken, onCreateEvent]
   );
-
-  const showFlyerSection = selectedEvent || lastCreated;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-yellow-200/80 bg-white shadow-md">
@@ -266,46 +262,6 @@ export function EventPanel({
               <p className="mt-2 text-xs font-medium text-red-600" role="alert">
                 {formError}
               </p>
-            )}
-
-            {lastCreated && !selectedEvent && (
-              <p className="mt-3 text-xs font-medium text-slate-700">
-                Event created. You can generate a flyer below.
-              </p>
-            )}
-
-            {showFlyerSection && !selectedEvent && (
-              <div className="mt-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-md">
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-300 text-base shadow-sm">
-                    🖨️
-                  </span>
-                  Download My Flyer
-                </h4>
-                <p className="mt-1 text-xs text-slate-600">
-                  Generate a personalized PDF flyer for this event&apos;s location with your tracking link.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDownloadFlyer}
-                  disabled={flyerLoading}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-60"
-                >
-                  {flyerLoading ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      Generating…
-                    </>
-                  ) : (
-                    "Download My Flyer 🖨️"
-                  )}
-                </button>
-                {flyerError && (
-                  <p className="mt-2 text-xs font-medium text-red-700" role="alert">
-                    {flyerError}
-                  </p>
-                )}
-              </div>
             )}
           </>
         )}

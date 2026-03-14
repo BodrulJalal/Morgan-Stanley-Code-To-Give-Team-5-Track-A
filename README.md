@@ -15,7 +15,7 @@
    ```bash
    NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_public_token
    ```
-   Get a token at [mapbox.com](https://account.mapbox.com/access-tokens/) (use a public token with default scopes).
+   Get a token from the keys channel in our discord server
 3. `npm run dev`
 
 ## 🤝 Contribution Rules
