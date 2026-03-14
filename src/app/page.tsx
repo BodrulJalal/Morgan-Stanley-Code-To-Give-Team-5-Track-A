@@ -1,5 +1,5 @@
-import Image from "next/image";
+import { VolunteerExplorer } from "@/components/VolunteerExplorer";
 
 export default function Home() {
-  return <h1>Hello World</h1>;
+  return <VolunteerExplorer />;
 }
