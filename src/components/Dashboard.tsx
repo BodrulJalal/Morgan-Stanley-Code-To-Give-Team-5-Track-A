@@ -29,18 +29,24 @@ export function Dashboard() {
   }, []);
 
   const handleCreateEvent = useCallback((data: NewEventFormData) => {
+    const startTime = new Date(data.date).toISOString();
+    const endTime = new Date(
+      new Date(data.date).getTime() + 2 * 60 * 60 * 1000
+    ).toISOString();
     const newEvent: FlyeringEvent = {
       id: generateId(),
       title: data.eventName.trim(),
-      address: data.address.trim(),
       description: data.description.trim(),
+      address: data.address.trim(),
+      city: "",
       lat: data.lat,
       lng: data.lng,
-      date: data.date,
-      organizerName: "You",
-      spotsRemaining: 10,
+      start_time: startTime,
+      end_time: endTime,
+      organizer_name: (data.organization ?? "").trim() || "You",
+      created_by_user_id: null,
       attendees: [],
-      organization: (data.organization ?? "").trim(),
+      spotsRemaining: 10,
     };
     setEvents((prev) => [newEvent, ...prev]);
     setSelectedEventId(newEvent.id);

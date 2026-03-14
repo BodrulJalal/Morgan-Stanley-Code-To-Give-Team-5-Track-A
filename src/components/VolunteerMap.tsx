@@ -118,7 +118,7 @@ export function VolunteerMap({
                 <span className="line-clamp-2">{popupEvent.title}</span>
               </h3>
               <p className="mt-1 text-xs font-medium uppercase tracking-wide text-green-700/80">
-                {new Date(popupEvent.date).toLocaleString("en-US", {
+                {new Date(popupEvent.start_time).toLocaleString("en-US", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}

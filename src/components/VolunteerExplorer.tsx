@@ -1,16 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
 import { VolunteerMap } from "./VolunteerMap";
 import { downloadAreaFlyer } from "@/lib/downloadFlyer";
 
 export function VolunteerExplorer() {
-  const { events, toggleJoin } = useEvents();
-  const currentUserId = "vol_123";
+  const { events, loading, error, refetch, toggleJoin } = useEvents();
+  // Placeholder until Supabase Auth is integrated; replace with session.user.id
+  const currentUserId = "00000000-0000-0000-0000-000000000001";
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [flyerLoading, setFlyerLoading] = useState(false);
   const [flyerError, setFlyerError] = useState<string | null>(null);
+  const [joinLoadingId, setJoinLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((e) => e.id === selectedEventId) ?? null;
@@ -37,8 +43,13 @@ export function VolunteerExplorer() {
   }, [selectedEvent, currentUserId]);
 
   const handleToggleJoin = useCallback(
-    (eventId: string) => {
-      toggleJoin(eventId, currentUserId);
+    async (eventId: string) => {
+      setJoinLoadingId(eventId);
+      try {
+        await toggleJoin(eventId, currentUserId);
+      } finally {
+        setJoinLoadingId(null);
+      }
     },
     [toggleJoin, currentUserId]
   );
@@ -91,7 +102,23 @@ export function VolunteerExplorer() {
 
           {/* Zone 1: Detail Stage (does not shrink) */}
           <div className="shrink-0 border-b-2 border-slate-100 px-4 pb-4 pt-3 mb-4">
-            {selectedEvent ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-amber-50/50 py-12">
+                <span className="h-10 w-10 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" aria-hidden />
+                <p className="mt-3 text-sm font-medium text-slate-700">Loading events…</p>
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-medium text-amber-800" role="alert">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  className="mt-2 text-xs font-semibold text-purple-600 hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : selectedEvent ? (
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm ring-1 ring-slate-100">
                 <h3 className="text-base font-bold leading-snug text-slate-800">
                   {selectedEvent.title}
@@ -106,15 +133,20 @@ export function VolunteerExplorer() {
                   <button
                     type="button"
                     onClick={() => handleToggleJoin(selectedEvent.id)}
-                    className={`rounded-full px-6 py-2 text-sm font-bold shadow-md transition-colors duration-200 ${
+                    disabled={joinLoadingId === selectedEvent.id}
+                    className={`rounded-full px-6 py-2 text-sm font-bold shadow-md transition-colors duration-200 disabled:opacity-70 ${
                       selectedEvent.attendees?.includes(currentUserId)
                         ? "border border-green-300 bg-green-100 text-green-800 hover:bg-green-50"
                         : "bg-purple-600 text-white hover:bg-purple-700"
                     }`}
                   >
-                    {selectedEvent.attendees?.includes(currentUserId)
-                      ? "Joined ✅"
-                      : "Join Event"}
+                    {joinLoadingId === selectedEvent.id ? (
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : selectedEvent.attendees?.includes(currentUserId) ? (
+                      "Joined ✅"
+                    ) : (
+                      "Join Event"
+                    )}
                   </button>
                   <button
                     type="button"
@@ -134,16 +166,16 @@ export function VolunteerExplorer() {
                 </div>
                 <div className="mt-4 border-t border-slate-100 pt-3">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    {new Date(selectedEvent.date).toLocaleString("en-US", {
+                    {new Date(selectedEvent.start_time).toLocaleString("en-US", {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })}
                   </p>
-                  {selectedEvent.organizerName && (
+                  {selectedEvent.organizer_name && (
                     <p className="mt-0.5 text-xs text-slate-600">
                       Organizer:{" "}
                       <span className="font-medium text-slate-800">
-                        {selectedEvent.organizerName}
+                        {selectedEvent.organizer_name}
                       </span>
                     </p>
                   )}
@@ -170,50 +202,54 @@ export function VolunteerExplorer() {
 
           {/* Zone 2: Scrollable list (only this area scrolls) */}
           <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-8 pt-2">
-            <div className="space-y-3">
-              {events.map((event) => {
-                const isActive = event.id === selectedEventId;
-                return (
-                  <button
-                    key={event.id}
-                    type="button"
-                    onClick={() => setSelectedEventId(event.id)}
-                    className={`w-full rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
-                      isActive
-                        ? "border-purple-500 bg-purple-50/70"
-                        : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-sm font-semibold text-slate-800">
-                          {event.title}
-                        </h3>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          {new Date(event.date).toLocaleString("en-US", {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                          })}
-                        </p>
-                        <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">
-                          {event.address}
-                        </p>
+            {loading ? (
+              <p className="py-4 text-center text-xs text-slate-500">Loading events…</p>
+            ) : (
+              <div className="space-y-3">
+                {events.map((event) => {
+                  const isActive = event.id === selectedEventId;
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={() => setSelectedEventId(event.id)}
+                      className={`w-full rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
+                        isActive
+                          ? "border-purple-500 bg-purple-50/70"
+                          : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-sm font-semibold text-slate-800">
+                            {event.title}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {new Date(event.start_time).toLocaleString("en-US", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </p>
+                          <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">
+                            {event.address}
+                          </p>
+                        </div>
+                        <span
+                          className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-300 text-base shadow-sm"
+                          aria-hidden="true"
+                        >
+                          🍋
+                        </span>
                       </div>
-                      <span
-                        className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-300 text-base shadow-sm"
-                        aria-hidden="true"
-                      >
-                        🍋
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {events.length === 0 && (
-              <p className="py-4 text-center text-xs text-slate-500">
-                No events yet. Be the first to create one in the Organizer Hub.
-              </p>
+                    </button>
+                  );
+                })}
+                {events.length === 0 && (
+                  <p className="py-4 text-center text-xs text-slate-500">
+                    No events yet. Be the first to create one in the Organizer Hub.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </section>
