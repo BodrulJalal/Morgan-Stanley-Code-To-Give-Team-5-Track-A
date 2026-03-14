@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Map, { Marker, Popup, type MarkerEvent, type MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { FlyeringEvent } from "@/types/events";
@@ -42,12 +42,26 @@ export function VolunteerMap({
   onSelectEvent,
 }: VolunteerMapProps) {
   const mapRef = useRef<MapRef | null>(null);
-  const [popupEventId, setPopupEventId] = useState<string | null>(selectedEventId);
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      return;
+    }
+
+    const selectedEvent = events.find((event) => event.id === selectedEventId);
+    if (!selectedEvent) {
+      return;
+    }
+
+    mapRef.current?.flyTo({
+      center: [selectedEvent.lng, selectedEvent.lat],
+      zoom: 13,
+    });
+  }, [events, selectedEventId]);
 
   const handleMarkerClick = useCallback(
     (e: MarkerEvent<MouseEvent>, event: FlyeringEvent) => {
       e.originalEvent?.stopPropagation();
-      setPopupEventId(event.id);
       onSelectEvent(event);
       const center: [number, number] = [event.lng, event.lat];
       mapRef.current?.flyTo({ center, zoom: 13 });
@@ -56,11 +70,10 @@ export function VolunteerMap({
   );
 
   const handleClosePopup = useCallback(() => {
-    setPopupEventId(null);
     onSelectEvent(null);
   }, [onSelectEvent]);
 
-  const popupEvent = events.find((e) => e.id === popupEventId) ?? null;
+  const popupEvent = events.find((event) => event.id === selectedEventId) ?? null;
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!mapboxToken) {
