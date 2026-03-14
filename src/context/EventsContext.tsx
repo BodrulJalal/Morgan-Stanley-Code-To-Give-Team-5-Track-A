@@ -18,26 +18,6 @@ type EventsContextValue = {
   scoreboard: UserScore[];
   recordEventJoined: (eventId: string) => boolean;
   recordFlyerPosted: () => void;
-
-export type FlyeringEvent = {
-  id: string;
-  title: string;
-  description: string;
-  address: string;
-  lat: number;
-  lng: number;
-  date: string;
-  attendees: string[];
-   organizerName: string;
-   spotsRemaining: number;
-};
-
-type EventsContextValue = {
-  events: FlyeringEvent[];
-  addEvent: (
-    event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining">
-  ) => FlyeringEvent;
-  toggleJoin: (eventId: string, userId: string) => void;
 };
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
@@ -61,9 +41,6 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     date: "2026-03-20T17:30:00",
     organizerName: "Lemontree Team",
     spotsRemaining: 12,
-    attendees: [],
-    organizerName: "Neighborhood organizer",
-    spotsRemaining: 8,
   },
   {
     id: "evt-jackson-heights",
@@ -76,9 +53,6 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
     date: "2026-03-21T11:00:00",
     organizerName: "Neighborhood Captains",
     spotsRemaining: 8,
-    attendees: [],
-    organizerName: "Neighborhood organizer",
-    spotsRemaining: 12,
   },
   {
     id: "evt-grand-concourse",
@@ -133,9 +107,6 @@ const INITIAL_SCOREBOARD: UserScore[] = [
     eventsJoined: 5,
     joinedEventIds: ["evt-jules-1", "evt-jules-2", "evt-jules-3", "evt-jules-4", "evt-jules-5"],
     points: 65,
-    attendees: [],
-    organizerName: "Neighborhood organizer",
-    spotsRemaining: 10,
   },
 ];
 
@@ -183,17 +154,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       }
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
-        const withAttendees = (parsed as Partial<FlyeringEvent>[]).map((event) => ({
-          attendees: [],
-          organizerName: "Neighborhood organizer",
-          spotsRemaining: 10,
-          ...event,
-          attendees: Array.isArray(event.attendees) ? event.attendees : [],
-          organizerName: event.organizerName ?? "Neighborhood organizer",
-          spotsRemaining:
-            typeof event.spotsRemaining === "number" ? event.spotsRemaining : 10,
-        }));
-        setEvents(withAttendees as FlyeringEvent[]);
+        setEvents(parsed as FlyeringEvent[]);
       }
     } catch {
       // Ignore read errors and fall back to in-memory state.
@@ -263,39 +224,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     };
     setEvents((prev) => [newEvent, ...prev]);
     return newEvent;
-  const addEvent = useCallback(
-    (
-      event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining">
-    ): FlyeringEvent => {
-    const id = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const newEvent: FlyeringEvent = {
-        id,
-        attendees: [],
-        organizerName: "Neighborhood organizer",
-        spotsRemaining: 10,
-        ...event,
-      };
-      setEvents((prev) => [newEvent, ...prev]);
-      return newEvent;
-    },
-    []
-  );
-
-  const toggleJoin = useCallback((eventId: string, userId: string) => {
-    setEvents((prev) =>
-      prev.map((event) => {
-        if (event.id !== eventId) return event;
-        const attendees = Array.isArray(event.attendees) ? event.attendees : [];
-        const isJoined = attendees.includes(userId);
-        const nextAttendees = isJoined
-          ? attendees.filter((id) => id !== userId)
-          : [...attendees, userId];
-        return {
-          ...event,
-          attendees: nextAttendees,
-        };
-      })
-    );
   }, []);
 
   const recordEventJoined = useCallback(
@@ -336,9 +264,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       recordFlyerPosted,
     }),
     [events, addEvent, scoreboard, recordEventJoined, recordFlyerPosted]
-      toggleJoin,
-    }),
-    [events, addEvent, toggleJoin]
   );
 
   return <EventsContext.Provider value={value}>{children}</EventsContext.Provider>;
