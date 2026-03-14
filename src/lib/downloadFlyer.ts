@@ -13,35 +13,74 @@ export async function downloadAreaFlyer(
   lat: number,
   lng: number,
   locationName: string,
-  ref: string
+  ref: string,
+  options?: {
+    flyerLang?: "en" | "es";
+    sample?: "1" | "2" | "3" | "4";
+  }
 ): Promise<DownloadFlyerResult> {
   const params = new URLSearchParams({
     lat: String(lat),
     lng: String(lng),
-    locationName: locationName.trim() || "Event",
-    ref: ref.trim() || "anonymous",
   });
+
+  const trimmedName = locationName.trim();
+  if (trimmedName) {
+    params.set("locationName", trimmedName);
+  }
+
+  const trimmedRef = ref.trim();
+  if (trimmedRef) {
+    params.set("ref", trimmedRef);
+  }
+
+  if (options?.flyerLang) {
+    params.set("flyerLang", options.flyerLang);
+  }
+
+  if (options?.sample) {
+    params.set("sample", options.sample);
+  }
   const url = `${FLYER_API_BASE}?${params.toString()}`;
 
   try {
     const res = await fetch(url, { method: "GET" });
 
-    if (res.status === 400) {
-      return {
-        ok: false,
-        error: "Invalid request. Please check the location and try again.",
-      };
-    }
-    if (res.status === 422) {
-      return {
-        ok: false,
-        error: "This location isn't supported for flyer generation yet.",
-      };
-    }
     if (!res.ok) {
+      // Try to extract a message from the JSON error body if present
+      let message: string | null = null;
+      try {
+        const errJson = await res.clone().json();
+        if (errJson && typeof errJson.message === "string") {
+          message = errJson.message;
+        }
+      } catch {
+        // ignore JSON parse errors, we'll fall back to generic copy
+      }
+
+      if (res.status === 400) {
+        return {
+          ok: false,
+          error:
+            message ??
+            "Invalid request. Please check the coordinates and try again.",
+        };
+      }
+
+      if (res.status === 422) {
+        return {
+          ok: false,
+          error:
+            message ??
+            "This location is currently outside Lemontree's service area (no nearby resources).",
+        };
+      }
+
       return {
         ok: false,
-        error: `Could not generate flyer (${res.status}). Please try again later.`,
+        error:
+          message ??
+          `Could not generate flyer (${res.status}). Please try again later.`,
       };
     }
 

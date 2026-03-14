@@ -41,7 +41,9 @@ export function EventPanel({
     const currentUserId = "demo-volunteer-123";
     setFlyerError(null);
     setFlyerLoading(true);
-    const result = await downloadAreaFlyer(lat, lng, name, currentUserId);
+    const result = await downloadAreaFlyer(lat, lng, name, currentUserId, {
+      flyerLang: "en",
+    });
     setFlyerLoading(false);
     if (result.ok) {
       setFlyerError(null);
@@ -109,8 +111,7 @@ export function EventPanel({
     [form, initialForm, mapboxToken, onCreateEvent]
   );
 
-  const showFlyerSection =
-    selectedEvent || lastCreated || (form.eventName.trim() && form.date && form.description.trim());
+  const showFlyerSection = selectedEvent || lastCreated;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -159,7 +160,7 @@ export function EventPanel({
                     Generating…
                   </>
                 ) : (
-                  "Download Area Flyer"
+                  "Download My Flyer"
                 )}
               </button>
               {flyerError && (
@@ -265,7 +266,7 @@ export function EventPanel({
                       Generating…
                     </>
                   ) : (
-                    "Download Area Flyer"
+                    "Download My Flyer"
                   )}
                 </button>
                 {flyerError && (
