@@ -106,7 +106,7 @@ export function EventPanel({
         setIsGeocoding(false);
       }
     },
-    [form, initialForm, mapboxToken, onCreateEvent]
+    [form, mapboxToken, onCreateEvent]
   );
 
   return (

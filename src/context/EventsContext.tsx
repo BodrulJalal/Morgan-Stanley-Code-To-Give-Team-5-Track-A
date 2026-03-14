@@ -81,33 +81,37 @@ const INITIAL_EVENTS: FlyeringEvent[] = [
   },
 ];
 
-export function EventsProvider({ children }: { children: ReactNode }) {
-  const [events, setEvents] = useState<FlyeringEvent[]>(INITIAL_EVENTS);
+function getInitialEvents(): FlyeringEvent[] {
+  if (typeof window === "undefined") {
+    return INITIAL_EVENTS;
+  }
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_EVENTS));
-        return;
-      }
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed)) {
-        const withAttendees = (parsed as Partial<FlyeringEvent>[]).map((event) => ({
-          ...event,
-          attendees: Array.isArray(event.attendees) ? event.attendees : [],
-          organizerName: event.organizerName ?? "Neighborhood organizer",
-          spotsRemaining:
-            typeof event.spotsRemaining === "number" ? event.spotsRemaining : 10,
-          organization: typeof event.organization === "string" ? event.organization : "",
-        }));
-        setEvents(withAttendees as FlyeringEvent[]);
-      }
-    } catch {
-      // ignore read errors and fall back to in-memory state
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return INITIAL_EVENTS;
     }
-  }, []);
+
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return INITIAL_EVENTS;
+    }
+
+    return (parsed as Partial<FlyeringEvent>[]).map((event) => ({
+      ...event,
+      attendees: Array.isArray(event.attendees) ? event.attendees : [],
+      organizerName: event.organizerName ?? "Neighborhood organizer",
+      spotsRemaining:
+        typeof event.spotsRemaining === "number" ? event.spotsRemaining : 10,
+      organization: typeof event.organization === "string" ? event.organization : "",
+    })) as FlyeringEvent[];
+  } catch {
+    return INITIAL_EVENTS;
+  }
+}
+
+export function EventsProvider({ children }: { children: ReactNode }) {
+  const [events, setEvents] = useState<FlyeringEvent[]>(getInitialEvents);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
