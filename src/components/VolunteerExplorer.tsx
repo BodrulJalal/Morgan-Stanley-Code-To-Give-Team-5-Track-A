@@ -55,12 +55,20 @@ export function VolunteerExplorer() {
             </p>
           </div>
         </div>
-        <a
-          href="/organizer"
-          className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
-        >
-          Open Organizer Hub
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="/admin"
+            className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+          >
+            Admin Page (developmental, will be removed)
+          </a>
+          <a
+            href="/organizer"
+            className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
+          >
+            Open Organizer Hub
+          </a>
+        </div>
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 md:flex-row md:p-6">
