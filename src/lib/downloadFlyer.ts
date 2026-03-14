@@ -12,12 +12,14 @@ export type DownloadFlyerResult =
 export async function downloadAreaFlyer(
   lat: number,
   lng: number,
-  locationName: string
+  locationName: string,
+  ref: string
 ): Promise<DownloadFlyerResult> {
   const params = new URLSearchParams({
     lat: String(lat),
     lng: String(lng),
     locationName: locationName.trim() || "Event",
+    ref: ref.trim() || "anonymous",
   });
   const url = `${FLYER_API_BASE}?${params.toString()}`;
 

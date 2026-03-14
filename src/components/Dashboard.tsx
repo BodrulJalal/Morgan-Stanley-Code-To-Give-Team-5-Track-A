@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import { VolunteerMap } from "./VolunteerMap";
 import { EventPanel } from "./EventPanel";
-import { MOCK_FLYERING_EVENTS } from "@/data/mockEvents";
 import type { FlyeringEvent, NewEventFormData } from "@/types/events";
 
 function generateId() {
@@ -11,7 +10,7 @@ function generateId() {
 }
 
 export function Dashboard() {
-  const [events, setEvents] = useState<FlyeringEvent[]>(MOCK_FLYERING_EVENTS);
+  const [events, setEvents] = useState<FlyeringEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId) ?? null;
@@ -35,6 +34,8 @@ export function Dashboard() {
     const newEvent: FlyeringEvent = {
       id: generateId(),
       title: data.eventName.trim(),
+      address: data.address.trim(),
+      description: data.description.trim(),
       lat: data.lat,
       lng: data.lng,
       date: data.date,

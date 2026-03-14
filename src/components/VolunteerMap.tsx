@@ -110,6 +110,10 @@ export function VolunteerMap({
                 })}
               </p>
               <p className="text-sm text-slate-500">by {popupEvent.organizerName}</p>
+              <p className="mt-1 text-xs text-slate-500">{popupEvent.address}</p>
+              <p className="mt-1 line-clamp-3 text-xs text-slate-600">
+                {popupEvent.description}
+              </p>
               <p className="mt-1 text-sm">
                 {popupEvent.spotsRemaining > 0 ? (
                   <span className="text-green-700">{popupEvent.spotsRemaining} spots left</span>
