@@ -16,9 +16,9 @@ type EventsContextValue = {
   addEvent: (event: NewFlyeringEvent) => FlyeringEvent;
   currentUserId: string;
   scoreboard: UserScore[];
-  recordEventJoined: (eventId: string) => boolean;
   recordFlyerPosted: () => void;
-  toggleJoin: (eventId: string, userId: string) => void;
+  joinEvent: (eventId: string, userId: string) => boolean;
+  leaveEvent: (eventId: string, userId: string) => boolean;
 };
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
@@ -183,46 +183,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     return newEvent;
   }, []);
 
-  const recordEventJoined = useCallback(
-    (eventId: string): boolean => {
-      let joined = false;
-
-      setEvents((prev) =>
-        prev.map((event) => {
-          if (event.id !== eventId) return event;
-
-          const attendees = Array.isArray(event.attendees) ? event.attendees : [];
-          if (attendees.includes(CURRENT_USER_ID)) {
-            return event;
-          }
-
-          if ((event.spotsRemaining ?? 0) <= 0) {
-            return event;
-          }
-
-          joined = true;
-
-          return {
-            ...event,
-            attendees: [...attendees, CURRENT_USER_ID],
-            spotsRemaining: Math.max((event.spotsRemaining ?? 1) - 1, 0),
-          };
-        })
-      );
-
-      if (joined) {
-        updateCurrentUserScore((current) => ({
-          ...current,
-          points: current.points + 25,
-          eventsJoined: (current.eventsJoined ?? 0) + 1,
-        }));
-      }
-
-      return joined;
-    },
-    [updateCurrentUserScore]
-  );
-
   const recordFlyerPosted = useCallback(() => {
     updateCurrentUserScore((current) => ({
       ...current,
@@ -231,28 +191,66 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     }));
   }, [updateCurrentUserScore]);
 
-  const toggleJoin = useCallback((eventId: string, userId: string) => {
+  const joinEvent = useCallback((eventId: string, userId: string) => {
+    const targetEvent = events.find((event) => event.id === eventId);
+    if (!targetEvent) return false;
+
+    const attendees = Array.isArray(targetEvent.attendees) ? targetEvent.attendees : [];
+    if (attendees.includes(userId)) return true;
+    if ((targetEvent.spotsRemaining ?? 0) <= 0) return false;
+
     setEvents((prev) =>
       prev.map((event) => {
         if (event.id !== eventId) return event;
-
-        const attendees = Array.isArray(event.attendees) ? event.attendees : [];
-        const isJoined = attendees.includes(userId);
-
-        const nextAttendees = isJoined
-          ? attendees.filter((id) => id !== userId)
-          : [...attendees, userId];
-
         return {
           ...event,
-          attendees: nextAttendees,
-          spotsRemaining: isJoined
-            ? (event.spotsRemaining ?? 0) + 1
-            : Math.max((event.spotsRemaining ?? 1) - 1, 0),
+          attendees: [...(Array.isArray(event.attendees) ? event.attendees : []), userId],
+          spotsRemaining: Math.max((event.spotsRemaining ?? 1) - 1, 0),
         };
       })
     );
-  }, []);
+
+    if (userId === CURRENT_USER_ID) {
+      updateCurrentUserScore((current) => ({
+        ...current,
+        points: Math.max((current.points ?? 0) + 25, 0),
+        eventsJoined: (current.eventsJoined ?? 0) + 1,
+      }));
+    }
+
+    return true;
+  }, [events, updateCurrentUserScore]);
+
+  const leaveEvent = useCallback((eventId: string, userId: string) => {
+    const targetEvent = events.find((event) => event.id === eventId);
+    if (!targetEvent) return false;
+
+    const attendees = Array.isArray(targetEvent.attendees) ? targetEvent.attendees : [];
+    if (!attendees.includes(userId)) return false;
+
+    setEvents((prev) =>
+      prev.map((event) => {
+        if (event.id !== eventId) return event;
+        return {
+          ...event,
+          attendees: (Array.isArray(event.attendees) ? event.attendees : []).filter(
+            (id) => id !== userId
+          ),
+          spotsRemaining: (event.spotsRemaining ?? 0) + 1,
+        };
+      })
+    );
+
+    if (userId === CURRENT_USER_ID) {
+      updateCurrentUserScore((current) => ({
+        ...current,
+        points: Math.max((current.points ?? 0) - 25, 0),
+        eventsJoined: Math.max((current.eventsJoined ?? 0) - 1, 0),
+      }));
+    }
+
+    return true;
+  }, [events, updateCurrentUserScore]);
 
   const value = useMemo<EventsContextValue>(
     () => ({
@@ -260,11 +258,11 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       addEvent,
       currentUserId: CURRENT_USER_ID,
       scoreboard,
-      recordEventJoined,
       recordFlyerPosted,
-      toggleJoin,
+      joinEvent,
+      leaveEvent,
     }),
-    [events, addEvent, scoreboard, recordEventJoined, recordFlyerPosted, toggleJoin]
+    [events, addEvent, scoreboard, recordFlyerPosted, joinEvent, leaveEvent]
   );
 
   return <EventsContext.Provider value={value}>{children}</EventsContext.Provider>;

@@ -5,6 +5,10 @@ import { VolunteerMap } from "./VolunteerMap";
 import { EventPanel } from "./EventPanel";
 import type { FlyeringEvent, NewEventFormData } from "@/types/events";
 
+function generateId() {
+  return `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function Dashboard() {
   const [events, setEvents] = useState<FlyeringEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -35,6 +39,7 @@ export function Dashboard() {
       lat: data.lat,
       lng: data.lng,
       date: data.date,
+      attendees: [],
       organizerName: "You",
       spotsRemaining: 10,
     };

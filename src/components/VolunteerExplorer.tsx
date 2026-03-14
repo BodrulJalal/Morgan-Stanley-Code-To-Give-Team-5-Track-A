@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useEvents } from "@/context/EventsContext";
+import type { FlyeringEvent } from "@/types/events";
 import { VolunteerMap } from "./VolunteerMap";
 import { downloadAreaFlyer } from "@/lib/downloadFlyer";
 import { ScoreboardCard } from "./ScoreboardCard";
+
+const FLYER_TUTORIAL_IMAGE_SRC = "/modal-assets/Flyer Tutorial.png"; 
 
 export function VolunteerExplorer() {
   const {
     events,
     currentUserId,
     scoreboard,
-    recordEventJoined,
     recordFlyerPosted,
-    toggleJoin,
+    joinEvent,
+    leaveEvent,
   } = useEvents();
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
@@ -24,6 +27,7 @@ export function VolunteerExplorer() {
   const [flyerSuccess, setFlyerSuccess] = useState<string | null>(null);
   const [isScoreboardVisible, setIsScoreboardVisible] = useState(false);
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((e) => e.id === selectedEventId) ?? null;
@@ -45,6 +49,7 @@ export function VolunteerExplorer() {
   const handleDownloadFlyer = useCallback(async () => {
     if (!selectedEvent) return;
 
+    setIsDownloadModalOpen(true);
     setFlyerError(null);
     setFlyerSuccess(null);
     setFlyerLoading(true);
@@ -69,19 +74,24 @@ export function VolunteerExplorer() {
 
   const handleToggleJoin = useCallback(
     (eventId: string) => {
-      const event = events.find((e) => e.id === eventId);
+      const event = events.find((entry) => entry.id === eventId);
       if (!event) return;
 
       const alreadyJoined = event.attendees?.includes(currentUserId);
 
       if (alreadyJoined) {
-        toggleJoin(eventId, currentUserId);
-        setFlyerSuccess("You left the event.");
+        const left = leaveEvent(eventId, currentUserId);
+        if (!left) {
+          setFlyerError("Unable to leave this event right now.");
+          setFlyerSuccess(null);
+          return;
+        }
         setFlyerError(null);
+        setFlyerSuccess("You left the event and your join points were removed.");
         return;
       }
 
-      const joined = recordEventJoined(eventId);
+      const joined = joinEvent(eventId, currentUserId);
       if (!joined) {
         setFlyerError("Unable to join this event. It may already be full.");
         setFlyerSuccess(null);
@@ -91,7 +101,7 @@ export function VolunteerExplorer() {
       setFlyerError(null);
       setFlyerSuccess("You joined the event and earned points.");
     },
-    [events, currentUserId, toggleJoin, recordEventJoined]
+    [events, currentUserId, joinEvent, leaveEvent]
   );
 
   const handlePosterAdded = useCallback(() => {
@@ -100,6 +110,20 @@ export function VolunteerExplorer() {
     setFlyerError(null);
     setFlyerSuccess("Poster confirmed. Points awarded.");
   }, [recordFlyerPosted]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const shouldLockPage = isPosterModalOpen || isDownloadModalOpen;
+    const previousOverflow = document.body.style.overflow;
+
+    if (shouldLockPage) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isPosterModalOpen, isDownloadModalOpen]);
 
   return (
     <div className="flex min-h-screen flex-col bg-amber-50">
@@ -192,6 +216,14 @@ export function VolunteerExplorer() {
                   </p>
 
                   <div className="mt-3 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsDownloadModalOpen(true)}
+                      className="flex items-center justify-center rounded-full border border-purple-200 bg-white px-4 py-2 text-sm font-semibold text-purple-700 shadow-sm transition-colors duration-200 hover:bg-purple-50"
+                    >
+                      View Instructions
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => handleToggleJoin(selectedEvent.id)}
@@ -366,6 +398,45 @@ export function VolunteerExplorer() {
               >
                 Yes, Award points
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDownloadModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/55 px-4 py-4">
+          <div className="flex min-h-full items-center justify-center">
+            <div className="flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-4 py-4 md:px-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-purple-700">
+                    Flyer Tutorial
+                  </p>
+                  <h2 className="mt-2 text-xl font-bold text-slate-800">
+                    How to use your downloaded flyer
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Keep this guide open as a quick reference while you volunteer.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDownloadModalOpen(false)}
+                  className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-3 md:p-4">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <img
+                    src={FLYER_TUTORIAL_IMAGE_SRC}
+                    alt="Flyer tutorial guide"
+                    className="h-auto w-full object-contain"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
