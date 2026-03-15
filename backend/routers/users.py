@@ -44,3 +44,33 @@ def get_profile(user_id: str):
 
 	return result.data
 		
+
+@router.get("/{user_id}/analytics")
+def user_analytics(user_id: str):
+	
+	created = (
+		supabase.table("events")
+		.select("id, title, start_time, event_attendees(user_id)")
+		.eq("created_by_user_id", user_id)
+		.execute()
+	)
+
+	events_created = created.data or []
+	total_attendees = sum(len(e.get("event_attendees", [])) for e in events_created)
+
+
+	attending = (
+		supabase.table("event_attendees")
+		.select("event_id, events(title, start_time, organizer_name)")
+		.eq("user_id", user_id)
+		.execute()
+	)
+
+	return {
+		"user_id": user_id,
+		"events_created_count": len(events_created),
+		"total_attendees_across_events": total_attendees,
+		"events_attending_count": len(attending.data or []),
+		"events_created":  events_created, 
+		"events_attending": attending.data or [],
+	}
