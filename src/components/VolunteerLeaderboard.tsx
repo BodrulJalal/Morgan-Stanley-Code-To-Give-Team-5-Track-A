@@ -10,6 +10,18 @@ type VolunteerLeaderboardProps = {
   onToggle: () => void;
 };
 
+function getScoreEmoji(score: number, rank: number): string {
+  if (rank === 1) return "🏆";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+
+  if (score >= 100) return "🌟";
+  if (score >= 75) return "🔥";
+  if (score >= 50) return "💪";
+  if (score >= 25) return "🌱";
+  return "✨";
+}
+
 export function VolunteerLeaderboard({
   isExpanded,
   onToggle,
@@ -84,6 +96,10 @@ export function VolunteerLeaderboard({
                   ? currentRank
                   : visibleScoreboard.findIndex((item) => item.id === entry.id) + 1;
               const isCurrentVolunteer = !!currentVolunteer && entry.id === currentVolunteer.id;
+              const score = getVolunteerPoints(entry);
+              const scoreEmoji = getScoreEmoji(score, rank);
+              const rankLabel =
+                rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
               return (
                 <div
                   key={entry.id}
@@ -93,7 +109,7 @@ export function VolunteerLeaderboard({
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="font-bold text-slate-900">
-                      #{rank} {entry.name}
+                      {rankLabel} {entry.name}
                       {isCurrentVolunteer ? " (You)" : ""}
                     </span>
                     <span className="text-[11px] text-slate-500">
@@ -101,7 +117,7 @@ export function VolunteerLeaderboard({
                     </span>
                   </div>
                   <span className="text-lg font-bold text-slate-800">
-                    {getVolunteerPoints(entry)}
+                    {score} <span className="ml-1 align-middle">{scoreEmoji}</span>
                   </span>
                 </div>
               );
