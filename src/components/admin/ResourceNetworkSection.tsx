@@ -37,13 +37,11 @@ export function ResourceNetworkSection({
       </Title>
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="sm">
         <StatCard label="Total events" value={eventsCount} />
-        {coverageRatio != null ? (
-          <StatCard
-            label="Network coverage"
-            value={`${coverageRatio}%`}
-            sub="flyering events vs total resources"
-          />
-        ) : null}
+        <StatCard
+          label="Network coverage"
+          value={coverageRatio != null ? `${coverageRatio}%` : "—"}
+          sub="flyering events vs total resources"
+        />
       </SimpleGrid>
       {loading ? (
         <Text fz="sm" c="dimmed" inline>

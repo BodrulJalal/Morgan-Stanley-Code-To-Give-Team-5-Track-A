@@ -7,6 +7,7 @@ import {
   Card,
   Container,
   Group,
+  Loader,
   NumberInput,
   ScrollArea,
   Select,
@@ -17,36 +18,24 @@ import {
   Title,
 } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
-import { mockContacts } from "@/components/data/adminMockData";
+import { useAdminData } from "@/context/AdminDataContext";
 
 export default function AdminContactsPage() {
+  const { contacts, loading } = useAdminData();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [neighborhoodFilter, setNeighborhoodFilter] = useState<string | null>(null);
   const [minEventsFilter, setMinEventsFilter] = useState<number | "">("");
-
-  const neighborhoodOptions = useMemo(
-    () => [...new Set(mockContacts.map((contact) => contact.neighborhood))].sort(),
-    []
-  );
 
   const filteredContacts = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return mockContacts.filter((contact) => {
-      const matchesQuery =
-        !q ||
-        [contact.name, contact.email, contact.phone, contact.neighborhood].some((field) =>
-          field.toLowerCase().includes(q)
-        );
+    return contacts.filter((contact) => {
+      const matchesQuery = !q || contact.name.toLowerCase().includes(q);
       const matchesStatus = !statusFilter || contact.status === statusFilter;
-      const matchesNeighborhood =
-        !neighborhoodFilter || contact.neighborhood === neighborhoodFilter;
       const matchesMinEvents =
         minEventsFilter === "" || contact.totalEventsAttended >= minEventsFilter;
-
-      return matchesQuery && matchesStatus && matchesNeighborhood && matchesMinEvents;
+      return matchesQuery && matchesStatus && matchesMinEvents;
     });
-  }, [query, statusFilter, neighborhoodFilter, minEventsFilter]);
+  }, [contacts, query, statusFilter, minEventsFilter]);
 
   return (
     <Container size="xl" py="md">
@@ -67,7 +56,7 @@ export default function AdminContactsPage() {
           </Group>
           <Stack gap="sm" mb="md">
             <TextInput
-              placeholder="Search by name, email, phone, neighborhood"
+              placeholder="Search by name"
               leftSection={<IconSearch size={16} />}
               value={query}
               onChange={(e) => setQuery(e.currentTarget.value)}
@@ -85,14 +74,6 @@ export default function AdminContactsPage() {
                 value={statusFilter}
                 onChange={setStatusFilter}
               />
-              <Select
-                label="Neighborhood"
-                placeholder="All neighborhoods"
-                clearable
-                data={neighborhoodOptions.map((value) => ({ value, label: value }))}
-                value={neighborhoodFilter}
-                onChange={setNeighborhoodFilter}
-              />
               <NumberInput
                 label="Min events attended"
                 placeholder="Any"
@@ -105,7 +86,6 @@ export default function AdminContactsPage() {
                 onClick={() => {
                   setQuery("");
                   setStatusFilter(null);
-                  setNeighborhoodFilter(null);
                   setMinEventsFilter("");
                 }}
               >
@@ -113,53 +93,52 @@ export default function AdminContactsPage() {
               </Button>
             </Group>
           </Stack>
-          <ScrollArea>
-            <Table striped highlightOnHover withTableBorder withColumnBorders>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Email</Table.Th>
-                  <Table.Th>Phone</Table.Th>
-                  <Table.Th>Neighborhood</Table.Th>
-                  <Table.Th>Events Attended</Table.Th>
-                  <Table.Th>Last Attended</Table.Th>
-                  <Table.Th>Status</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {filteredContacts.map((contact) => (
-                  <Table.Tr key={contact.id}>
-                    <Table.Td>{contact.name}</Table.Td>
-                    <Table.Td>{contact.email}</Table.Td>
-                    <Table.Td>{contact.phone}</Table.Td>
-                    <Table.Td>{contact.neighborhood}</Table.Td>
-                    <Table.Td>{contact.totalEventsAttended}</Table.Td>
-                    <Table.Td>
-                      {new Date(contact.lastAttendedDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        color={
-                          contact.status === "active"
-                            ? "green"
-                            : contact.status === "warm"
-                              ? "yellow"
-                              : "gray"
-                        }
-                        variant="light"
-                      >
-                        {contact.status}
-                      </Badge>
-                    </Table.Td>
+
+          {loading ? (
+            <Loader size="sm" />
+          ) : (
+            <ScrollArea>
+              <Table striped highlightOnHover withTableBorder withColumnBorders>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Name</Table.Th>
+                    <Table.Th>Events Attended</Table.Th>
+                    <Table.Th>Last Attended</Table.Th>
+                    <Table.Th>Status</Table.Th>
                   </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </ScrollArea>
+                </Table.Thead>
+                <Table.Tbody>
+                  {filteredContacts.map((contact) => (
+                    <Table.Tr key={contact.id}>
+                      <Table.Td>{contact.name}</Table.Td>
+                      <Table.Td>{contact.totalEventsAttended}</Table.Td>
+                      <Table.Td>
+                        {new Date(contact.lastAttendedDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </Table.Td>
+                      <Table.Td>
+                        <Badge
+                          color={
+                            contact.status === "active"
+                              ? "green"
+                              : contact.status === "warm"
+                                ? "yellow"
+                                : "gray"
+                          }
+                          variant="light"
+                        >
+                          {contact.status}
+                        </Badge>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </ScrollArea>
+          )}
         </Card>
       </Stack>
     </Container>

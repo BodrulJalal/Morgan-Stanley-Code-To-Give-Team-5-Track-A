@@ -1,12 +1,14 @@
 "use client";
 
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Container, Loader, Stack, Text, Title } from "@mantine/core";
 import { EngagementHeatmapAndRecurringSection } from "@/components/admin/EngagementHeatmapAndRecurringSection";
 import { PastEventsSection } from "@/components/admin/PastEventsSection";
 import { UpcomingEventsSection } from "@/components/admin/UpcomingEventsSection";
-import { mockAdminMetrics } from "@/components/data/adminMockData";
+import { useAdminData } from "@/context/AdminDataContext";
 
 export default function LifecycleAnalyticsPage() {
+  const { metrics, loading } = useAdminData();
+
   return (
     <Container size="xl" py="md">
       <Stack gap="lg">
@@ -17,13 +19,19 @@ export default function LifecycleAnalyticsPage() {
           </Text>
         </div>
 
-        <EngagementHeatmapAndRecurringSection
-          metrics={mockAdminMetrics}
-          showHeatmap
-          showRecurring={false}
-        />
-        <UpcomingEventsSection events={mockAdminMetrics.upcomingEvents.slice(0, 8)} />
-        <PastEventsSection events={mockAdminMetrics.pastEvents.slice(0, 8)} />
+        {loading || !metrics ? (
+          <Loader size="sm" />
+        ) : (
+          <>
+            <EngagementHeatmapAndRecurringSection
+              metrics={metrics}
+              showHeatmap
+              showRecurring={false}
+            />
+            <UpcomingEventsSection events={metrics.upcomingEvents.slice(0, 8)} />
+            <PastEventsSection events={metrics.pastEvents.slice(0, 8)} />
+          </>
+        )}
       </Stack>
     </Container>
   );
