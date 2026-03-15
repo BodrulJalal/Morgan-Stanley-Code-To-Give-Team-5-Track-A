@@ -70,3 +70,35 @@ def list_events (
 
 	result = query.order("start_time", desc=False).execute()
 	return {"events": result.data, "count": len(result.data)}
+
+@router.get("/{event_id}")
+def get_event (event_id: str):
+	
+	result = (
+		supabase.table("events")
+		.select("*, profiles(display_name, avatar_url), event_attendees(user_id)")
+		.eq("id", event_id)
+		.single()
+		.execute()
+
+	)
+
+	if not result.data:
+		raise HTTPException(staus_code=404, detail="Resource (event) not found")
+
+	return result.data
+
+@router.post("", status_code=201)
+def create_event(event: EventCreate):
+
+	payload = event.model_dump()
+	
+	payload["start_time"] = event.start_time.isoformat()
+	payload["end_time"] = event.end_time.isoformat()
+
+	result = supabase.table("events").insert(payload).execute()
+	if not result.data:
+		raise HTTPException(staus_code=500, detail="Failed to create (event)")
+
+	return result.data[0]
+
