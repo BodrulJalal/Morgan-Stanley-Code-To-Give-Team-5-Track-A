@@ -18,6 +18,19 @@
    Get a token from the keys channel in our discord server
 3. `npm run dev`
 
+4. To run the backend, make sure you have the proper keys in a local env file. 
+   Then follow the commands below, be in the same folder as the hidden .git dir.
+   ```
+	cd backend     			  # Should be in this dir for requirements.txt file
+	python3 -m venv .venv     # Ease of use for development
+	pip -r requirements.txt   # Gets the required dependencies
+    uvicorn main:app --reload # Starts the server on localhost:8000
+   ```
+	Accessing http://127.0.0.1:8000/docs gives access to a really useful view of 
+	the currently available endpoints. This can be used to test out behavior 
+	of get requests and also post requests (note that post requests do modify 
+	the database so use carefully!)
+
 ## 🤝 Contribution Rules
 - **No pushing to `main`.**
 - Create a feature branch: `git checkout -b feature/name`
