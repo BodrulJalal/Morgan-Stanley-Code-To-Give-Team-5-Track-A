@@ -150,7 +150,7 @@ export function VolunteerExplorer() {
   }, [awardFlyerPosted]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-amber-50">
+    <div className="flex h-screen flex-col overflow-hidden" style={{ background: "linear-gradient(135deg, #FFF9E6, #FFE066)" }}>
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
