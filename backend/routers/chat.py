@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import Dict
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from typing import Dict, Annotated
+from pydantic import BaseModel
 import os
 
 from auth import get_current_user_id
@@ -44,17 +45,39 @@ class ConnectionManager:
 conn_manager = ConnectionManager()
 
 
+class SendMessageBody(BaseModel):
+	content: str
+
+
 @router.get("/{room_id}/messages")
 def get_messages (room_id: str, limit: int = 75):
 	result = (
 		supabase.table("messages")
 		.select("*, profiles(display_name)")
 		.eq("room_id", room_id)
+		.order("sent_at", desc=False)
 		.limit(limit)
 		.execute()
 	)
 
 	return {"messages": result.data}
+
+
+@router.post("/{room_id}/messages", status_code=201)
+def post_message(
+	room_id: str,
+	body: SendMessageBody,
+	user_id: Annotated[str, Depends(get_current_user_id)],
+):
+	result = (
+		supabase.table("messages")
+		.insert({"room_id": room_id, "user_id": user_id, "content": body.content.strip()})
+		.execute()
+	)
+	if not result.data:
+		from fastapi import HTTPException
+		raise HTTPException(status_code=500, detail="Failed to insert message")
+	return result.data[0]
 
 @router.websocket("/ws/{room_id}")
 async def chat (ws: WebSocket, room_id: str, user_id: str):
@@ -64,6 +87,7 @@ async def chat (ws: WebSocket, room_id: str, user_id: str):
 	history = (
 		supabase.table("messages")
 		.select("*, profiles(display_name)")
+		.eq("room_id", room_id)
 		.order("sent_at", desc=False)
 		.limit(50)
 		.execute()
@@ -85,12 +109,12 @@ async def chat (ws: WebSocket, room_id: str, user_id: str):
 			new_message = result.data[0]
 
 			# 2. Broadcast to everyone in the room including sender
-			await manager.broadcast(room_id, {
+			await conn_manager.broadcast(room_id, {
 				"type": "message",
 				"message": new_message
 			})
 
 	except WebSocketDisconnect:
-		manager.disconnect(room_id, websocket)
+		conn_manager.disconnect(room_id, ws)
 
 
