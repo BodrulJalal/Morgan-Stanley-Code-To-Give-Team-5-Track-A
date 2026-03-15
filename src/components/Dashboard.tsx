@@ -18,18 +18,24 @@ export function Dashboard() {
   }, []);
 
   const handleCreateEvent = useCallback((data: NewEventFormData) => {
+    const startTime = new Date(data.date).toISOString();
+    const endTime = new Date(
+      new Date(data.date).getTime() + 2 * 60 * 60 * 1000
+    ).toISOString();
     const newEvent: FlyeringEvent = {
       id: generateId(),
       title: data.eventName.trim(),
-      address: data.address.trim(),
       description: data.description.trim(),
+      address: data.address.trim(),
+      city: "",
       lat: data.lat,
       lng: data.lng,
-      date: data.date,
-      organizerName: "You",
-      spotsRemaining: 10,
+      start_time: startTime,
+      end_time: endTime,
+      organizer_name: (data.organization ?? "").trim() || "You",
+      created_by_user_id: null,
       attendees: [],
-      organization: (data.organization ?? "").trim(),
+      spotsRemaining: 10,
     };
     setEvents((prev) => [newEvent, ...prev]);
     setSelectedEventId(newEvent.id);
@@ -60,7 +66,7 @@ export function Dashboard() {
       </header>
 
       <main className="flex min-h-0 flex-1 gap-4 p-4 md:p-6">
-        <section className="relative min-w-0 flex-1 min-h-[520px] rounded-3xl bg-green-900/5 p-3 shadow-inner ring-1 ring-green-800/10">
+        <section className="relative min-w-0 flex-1 min-h-130 rounded-3xl bg-green-900/5 p-3 shadow-inner ring-1 ring-green-800/10">
           <div className="absolute inset-3 rounded-3xl bg-stone-50 shadow-md ring-1 ring-green-900/10 transition-shadow duration-200 hover:shadow-lg">
             <VolunteerMap
               events={events}
@@ -69,7 +75,7 @@ export function Dashboard() {
             />
           </div>
         </section>
-        <aside className="w-full shrink-0 md:w-[380px] h-full">
+        <aside className="w-full shrink-0 md:w-95 h-full">
           <div className="h-full rounded-3xl bg-white/90 shadow-md ring-1 ring-yellow-200/80 overflow-y-auto">
             <EventPanel
               selectedEvent={selectedEvent}
