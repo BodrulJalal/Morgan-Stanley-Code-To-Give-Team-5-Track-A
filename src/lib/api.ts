@@ -165,3 +165,59 @@ export async function leaveEvent(eventId: string): Promise<{ ok: boolean }> {
   );
   return handleResponse<{ ok: boolean }>(res);
 }
+
+// ─── Chat (room_id = event_id) ───────────────────────────────────────────────
+
+/** Raw message row from GET /api/chat/{room_id}/messages */
+export interface ApiChatMessageRow {
+  id: string;
+  room_id: string;
+  user_id: string;
+  content: string;
+  sent_at: string;
+  profiles?: { display_name: string | null } | null;
+}
+
+export interface GetChatMessagesResponse {
+  messages: ApiChatMessageRow[];
+}
+
+export async function getChatMessages(
+  roomId: string,
+  limit?: number
+): Promise<GetChatMessagesResponse> {
+  const url = new URL(
+    apiUrl(`/api/chat/${encodeURIComponent(roomId)}/messages`)
+  );
+  if (limit != null) url.searchParams.set("limit", String(limit));
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  return handleResponse<GetChatMessagesResponse>(res);
+}
+
+export interface SendChatMessageResponse {
+  id: string;
+  room_id: string;
+  user_id: string;
+  content: string;
+  sent_at: string;
+  profiles?: { display_name: string | null } | null;
+}
+
+export async function sendChatMessage(
+  roomId: string,
+  content: string
+): Promise<SendChatMessageResponse> {
+  const headers = await authHeaders();
+  const res = await fetch(
+    apiUrl(`/api/chat/${encodeURIComponent(roomId)}/messages`),
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ content: content.trim() }),
+    }
+  );
+  return handleResponse<SendChatMessageResponse>(res);
+}

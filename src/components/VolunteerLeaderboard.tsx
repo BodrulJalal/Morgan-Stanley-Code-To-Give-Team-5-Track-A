@@ -10,6 +10,26 @@ type VolunteerLeaderboardProps = {
   onToggle: () => void;
 };
 
+function getRankEmoji(rank: number): string {
+  if (rank === 1) return "🏆";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+  if (rank >= 4 && rank <= 10) return "🌟";
+  return "✨";
+}
+
+function getScoreEmoji(score: number, rank: number): string {
+  if (rank === 1) return "🏆";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+
+  if (score >= 100) return "🌟";
+  if (score >= 75) return "🔥";
+  if (score >= 50) return "💪";
+  if (score >= 25) return "🌱";
+  return "✨";
+}
+
 export function VolunteerLeaderboard({
   isExpanded,
   onToggle,
@@ -57,7 +77,7 @@ export function VolunteerLeaderboard({
             {isExpanded ? "Hide Full Board" : "Full Board"}
           </button>
 
-          <div className="rounded-xl bg-purple-600/90 px-3 py-1.5 text-white shadow-sm">
+          <div className="rounded-xl bg-primary-500/90 px-3 py-1.5 text-white shadow-sm">
             <p className="text-[10px] uppercase tracking-[0.2em] text-white/80">
               Total points
             </p>
@@ -84,16 +104,31 @@ export function VolunteerLeaderboard({
                   ? currentRank
                   : visibleScoreboard.findIndex((item) => item.id === entry.id) + 1;
               const isCurrentVolunteer = !!currentVolunteer && entry.id === currentVolunteer.id;
+              const score = getVolunteerPoints(entry);
+              const scoreEmoji = getScoreEmoji(score, rank);
+              const rankLabel =
+                rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+              const rankEmoji = getRankEmoji(rank);
+              const rankEmojiClass =
+                rank === 1
+                  ? "animate-bounce"
+                  : rank === 2 || rank === 3
+                    ? "animate-pulse"
+                    : "animate-pulse opacity-70";
               return (
                 <div
                   key={entry.id}
                   className={`flex justify-between items-center bg-white rounded-xl p-4 shadow-sm border border-slate-100 shrink-0 text-sm ${
                     isCurrentVolunteer ? "ring-2 ring-amber-300 bg-amber-50/80" : ""
-                  }`}
+                  } ${rank === 1 ? "shadow-amber-300 shadow-md" : ""}`}
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="font-bold text-slate-900">
-                      #{rank} {entry.name}
+                      {rankLabel}{" "}
+                      <span className={`inline-block mr-1 ${rankEmojiClass}`}>
+                        {rankEmoji}
+                      </span>
+                      {entry.name}
                       {isCurrentVolunteer ? " (You)" : ""}
                     </span>
                     <span className="text-[11px] text-slate-500">
@@ -101,7 +136,7 @@ export function VolunteerLeaderboard({
                     </span>
                   </div>
                   <span className="text-lg font-bold text-slate-800">
-                    {getVolunteerPoints(entry)}
+                    {score} <span className="ml-1 align-middle">{scoreEmoji}</span>
                   </span>
                 </div>
               );

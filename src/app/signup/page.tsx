@@ -48,7 +48,7 @@ export default function SignupPage() {
       {/* Background decoration */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-yellow-300/20 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-purple-200/25 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-primary-200/25 blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
@@ -56,7 +56,7 @@ export default function SignupPage() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-400 shadow-md">
-              <span className="text-xl" aria-hidden="true">🍋</span>
+              <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-6 w-6 object-contain" />
             </div>
             <span className="text-xl font-extrabold tracking-tight text-slate-800">Lemontree</span>
           </Link>
@@ -84,7 +84,7 @@ export default function SignupPage() {
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Jane Smith"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/30"
               />
             </div>
 
@@ -104,7 +104,7 @@ export default function SignupPage() {
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/30"
               />
             </div>
 
@@ -120,7 +120,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="text-xs text-purple-600 hover:text-purple-700"
+                  className="text-xs text-primary-500 hover:text-primary-600"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -133,7 +133,7 @@ export default function SignupPage() {
                 value={form.password}
                 onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                 placeholder="Min. 6 characters"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/30"
               />
               {/* Strength meter */}
               {strength && (
@@ -162,10 +162,10 @@ export default function SignupPage() {
                 value={form.confirm}
                 onChange={(e) => setForm((f) => ({ ...f, confirm: e.target.value }))}
                 placeholder="Re-enter your password"
-                className={`w-full rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30 ${
+                className={`w-full rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/30 ${
                   form.confirm && form.confirm !== form.password
                     ? "border-red-300 focus:border-red-400"
-                    : "border-slate-200 focus:border-purple-500"
+                    : "border-slate-200 focus:border-primary-500"
                 }`}
               />
               {form.confirm && form.confirm !== form.password && (
@@ -180,12 +180,12 @@ export default function SignupPage() {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-purple-600"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-primary-500"
                 />
                 <span className="text-xs leading-relaxed">
                   I agree to Lemontree&apos;s{" "}
-                  <span className="font-semibold text-purple-600">Terms of Service</span> and{" "}
-                  <span className="font-semibold text-purple-600">Privacy Policy</span>. I understand I am
+                  <span className="font-semibold text-primary-500">Terms of Service</span> and{" "}
+                  <span className="font-semibold text-primary-500">Privacy Policy</span>. I understand I am
                   responsible for supplying my own flyer materials.
                 </span>
               </label>
@@ -202,7 +202,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 w-full rounded-xl bg-purple-600 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-purple-700 hover:shadow-purple-200 hover:shadow-lg disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="mt-1 w-full rounded-xl bg-primary-500 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-primary-600 hover:shadow-primary-200 hover:shadow-lg disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -219,7 +219,7 @@ export default function SignupPage() {
         {/* Footer link */}
         <p className="mt-6 text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-purple-600 hover:text-purple-700">
+          <Link href="/login" className="font-semibold text-primary-500 hover:text-primary-600">
             Log in
           </Link>
         </p>

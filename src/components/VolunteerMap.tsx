@@ -22,7 +22,7 @@ function EventPin({ hasSpots, isJoined }: { hasSpots: boolean; isJoined: boolean
       type="button"
       className={`flex h-10 w-10 items-center justify-center rounded-full text-lg ring-2 transition-shadow duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 focus:ring-offset-yellow-100 disabled:cursor-not-allowed disabled:opacity-60 ${
         isJoined
-          ? "bg-purple-100 border-4 border-purple-600 shadow-purple-500/50 ring-purple-300"
+          ? "bg-primary-100 border-4 border-primary-500 shadow-primary-500/50 ring-primary-300"
           : "bg-white border-2 border-transparent shadow-md ring-yellow-400/70"
       }`}
       aria-label={hasSpots ? "View event with open spots" : "View full event"}
@@ -31,7 +31,7 @@ function EventPin({ hasSpots, isJoined }: { hasSpots: boolean; isJoined: boolean
         <span
           className={`absolute h-8 w-8 rounded-full animate-pulse ${
             isJoined
-              ? "bg-purple-300/60"
+              ? "bg-primary-300/60"
               : hasSpots
                 ? "bg-emerald-300/40"
                 : "bg-slate-400/30"
@@ -108,7 +108,7 @@ export function VolunteerMap({
           zoom: INITIAL_ZOOM,
         }}
         style={{ width: "100%", height: "100%", borderRadius: "1.5rem" }}
-        mapStyle="mapbox://styles/zjeon/cmmqqbavl00bk01qt0gf70lia"
+        mapStyle="mapbox://styles/zjeon/cmms4j7ya009q01s11cqyaksf"
         styleDiffing={false}
       >
         {events.map((event) => {
@@ -124,7 +124,10 @@ export function VolunteerMap({
               anchor="center"
               onClick={(e) => handleMarkerClick(e, event)}
             >
-              <EventPin hasSpots={event.spotsRemaining > 0} isJoined={isJoined} />
+              <EventPin
+                hasSpots={event.spotsRemaining > 0}
+                isJoined={isJoined}
+              />
             </Marker>
           );
         })}
@@ -154,7 +157,9 @@ export function VolunteerMap({
                 timeStyle: "short",
               })}
             </p>
-            <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>
+            <p className="mt-1 text-[11px] text-slate-600">
+              {popupEvent.address}
+            </p>
             <p className="mt-1 line-clamp-3 text-[11px] text-slate-700">
               {popupEvent.description}
             </p>

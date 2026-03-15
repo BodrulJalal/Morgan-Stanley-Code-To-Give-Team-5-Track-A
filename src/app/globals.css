@@ -10,6 +10,17 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Theme: rgba(37, 150, 190) = #2596be */
+  --color-primary-50: #e8f5f9;
+  --color-primary-100: #b8e2ef;
+  --color-primary-200: #88cfe5;
+  --color-primary-300: #58bcdb;
+  --color-primary-400: #2da3c8;
+  --color-primary-500: #2596be;
+  --color-primary-600: #1e7a99;
+  --color-primary-700: #185e73;
+  --color-primary-800: #12424d;
+  --color-primary-900: #0c2628;
 }
 
 @media (prefers-color-scheme: dark) {

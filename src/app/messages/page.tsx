@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useEvents } from "@/context/EventsContext";
 import { useAuth } from "@/context/AuthContext";
 import type { FlyeringEvent } from "@/types/events";
+import {
+  getChatMessages,
+  getUserProfile,
+  sendChatMessage,
+  type ApiChatMessageRow,
+  type SendChatMessageResponse,
+} from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,90 +44,32 @@ type Tab = "chat" | "photos";
 
 const AVATAR_COLORS = [
   "bg-yellow-300 text-yellow-900",
-  "bg-purple-100 text-purple-800",
+  "bg-primary-100 text-primary-800",
   "bg-emerald-100 text-emerald-800",
   "bg-blue-100 text-blue-800",
   "bg-pink-100 text-pink-800",
   "bg-orange-100 text-orange-800",
 ] as const;
 
-const INITIAL_UNREAD: Record<string, number> = {
-  "evt-1": 3,
-  "evt-6": 2,
-  "evt-3": 1,
-};
+const POLL_INTERVAL_MS = 4000;
 
-const MOCK_MESSAGES: Record<string, Message[]> = {
-  "evt-1": [
-    {
-      id: "m1",
-      senderId: "maya",
-      senderName: "Maya G.",
-      text: "Hey everyone! Reminder that we're meeting at 125th & Malcolm X at 9am Saturday 🙌",
-      timestamp: new Date(Date.now() - 1000 * 60 * 45),
-    },
-    {
-      id: "m2",
-      senderId: "james",
-      senderName: "James L.",
-      text: "Perfect, I'll bring extra bags and tape. Do we need more volunteers?",
-      timestamp: new Date(Date.now() - 1000 * 60 * 38),
-    },
-    {
-      id: "m3",
-      senderId: "you",
-      senderName: "You",
-      text: "I can bring 2 friends! Also confirmed with the church — they'll have water for us.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    },
-    {
-      id: "m4",
-      senderId: "maya",
-      senderName: "Maya G.",
-      text: "Amazing, that's huge. We're at 12 volunteers now — enough for the whole block.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 22),
-    },
-  ],
-  "evt-2": [
-    {
-      id: "m1",
-      senderId: "james",
-      senderName: "James L.",
-      text: "Flyers are printed and ready! 200 copies.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 26),
-    },
-    {
-      id: "m2",
-      senderId: "you",
-      senderName: "You",
-      text: "Great work James. I'll pick them up Friday evening.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 25),
-    },
-  ],
-  "evt-3": [
-    {
-      id: "m1",
-      senderId: "sofia",
-      senderName: "Sofia R.",
-      text: "Can someone cover the north section of Delancey? I'm taking the south.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 50),
-    },
-    {
-      id: "m2",
-      senderId: "you",
-      senderName: "You",
-      text: "I'll take north, no problem!",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 49),
-    },
-    {
-      id: "m3",
-      senderId: "sofia",
-      senderName: "Sofia R.",
-      text: "Thank you! Let's sync again Sunday morning before we go.",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    },
-  ],
-};
+function mapApiMessageToMessage(
+  row: ApiChatMessageRow | SendChatMessageResponse,
+  currentUserId: string | null,
+  currentUserDisplayName?: string | null,
+): Message {
+  const isYou = currentUserId !== null && row.user_id === currentUserId;
+  const senderName = isYou
+    ? (currentUserDisplayName ?? "You")
+    : (row.profiles?.display_name ?? "Someone");
+  return {
+    id: row.id,
+    senderId: isYou ? "you" : row.user_id,
+    senderName,
+    text: row.content,
+    timestamp: new Date(row.sent_at),
+  };
+}
 
 const MOCK_PHOTOS: Record<string, Photo[]> = {
   "evt-1": [
@@ -223,8 +172,7 @@ function formatMessageTime(date: Date): string {
 function formatEventDateRange(startIso: string, endIso: string): string {
   const start = new Date(startIso);
   const end = new Date(endIso);
-  const sameDay =
-    start.toDateString() === end.toDateString();
+  const sameDay = start.toDateString() === end.toDateString();
 
   const datePart = start.toLocaleDateString([], {
     weekday: "short",
@@ -270,8 +218,38 @@ function MembersSidebar({ eventId }: { eventId: string }) {
   const { events } = useEvents();
   const { user } = useAuth();
   const currentUserId = user?.id ?? null;
+  const [displayNames, setDisplayNames] = useState<Record<string, string>>({});
 
   const event = events.find((e) => e.id === eventId) ?? null;
+
+  // Fetch display names for other attendees
+  useEffect(() => {
+    if (!event?.attendees.length || !currentUserId) {
+      setDisplayNames({});
+      return;
+    }
+    const others = event.attendees.filter((id) => id !== currentUserId);
+    if (others.length === 0) {
+      setDisplayNames({});
+      return;
+    }
+    let cancelled = false;
+    setDisplayNames({});
+    Promise.all(others.map((userId) => getUserProfile(userId)))
+      .then((profiles) => {
+        if (cancelled) return;
+        const next: Record<string, string> = {};
+        others.forEach((userId, i) => {
+          const p = profiles[i];
+          next[userId] = p?.display_name ?? "Someone";
+        });
+        setDisplayNames(next);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [event?.id, event?.attendees?.join(","), currentUserId]);
 
   let members: Member[] =
     event && event.attendees.length > 0
@@ -279,13 +257,13 @@ function MembersSidebar({ eventId }: { eventId: string }) {
           id: attendeeId === currentUserId ? "you" : attendeeId,
           name:
             attendeeId === currentUserId
-              ? user?.name ?? "You"
-              : attendeeId,
+              ? (user?.name ?? "You")
+              : (displayNames[attendeeId] ?? "…"),
           role:
             attendeeId === event.created_by_user_id ? "organizer" : "volunteer",
-          online: false,
+          online: attendeeId === currentUserId,
         }))
-      : MOCK_MEMBERS[eventId] ?? [];
+      : (MOCK_MEMBERS[eventId] ?? []);
 
   const online = members.filter((m) => m.online);
   const offline = members.filter((m) => !m.online);
@@ -433,7 +411,8 @@ function EventDetailsBanner({ event }: { event: FlyeringEvent }) {
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3zm-.5 2v4l3 1.5.5-.87-2.5-1.25V5H7.5z" />
           </svg>
           <span className="text-[12px] font-medium text-yellow-800 truncate">
-            {formatEventDateRange(event.start_time, event.end_time)} · {event.address}
+            {formatEventDateRange(event.start_time, event.end_time)} ·{" "}
+            {event.address}
           </span>
         </div>
         <svg
@@ -480,42 +459,63 @@ function EventDetailsBanner({ event }: { event: FlyeringEvent }) {
 
 // ─── MessageBubble ────────────────────────────────────────────────────────────
 
-function MessageBubble({ msg }: { msg: Message }) {
+const GROUP_WINDOW_MS = 60_000;
+
+function MessageBubble({
+  msg,
+  isGroupedWithPrevious,
+  isGroupedWithNext,
+}: {
+  msg: Message;
+  isGroupedWithPrevious: boolean;
+  isGroupedWithNext: boolean;
+}) {
   const isMe = msg.senderId === "you";
+  const initial = msg.senderName.charAt(0).toUpperCase() || "?";
+  const avatarEl = (
+    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 bg-gray-200 text-gray-600">
+      {initial}
+    </div>
+  );
+  const yellowAvatarEl = (
+    <div className="w-7 h-7 rounded-full bg-yellow-300 flex items-center justify-center text-[10px] font-bold text-yellow-900 shrink-0">
+      {initial}
+    </div>
+  );
+  const avatarSpacer = <div className="w-7 h-7 shrink-0" aria-hidden="true" />;
+  const bubbleRadiusClasses = isMe
+    ? `rounded-2xl rounded-br-sm ${isGroupedWithPrevious ? "rounded-tr-sm" : ""}`
+    : `rounded-2xl rounded-bl-sm ${isGroupedWithPrevious ? "rounded-tl-sm" : ""}`;
+
   return (
-    <div className={`flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : ""}`}>
-      {!isMe && (
-        <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-600 shrink-0">
-          {msg.senderName
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 2)}
-        </div>
-      )}
+    <div
+      className={`flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : ""} ${isGroupedWithPrevious ? "mt-[2px]" : "mt-4"}`}
+    >
+      {!isMe &&
+        (isGroupedWithNext ? avatarSpacer : avatarEl)}
       <div
         className={`max-w-[65%] flex flex-col ${isMe ? "items-end" : "items-start"}`}
       >
-        {!isMe && (
-          <span className="text-[11px] text-gray-400 font-medium mb-1 ml-1">
+        {!isGroupedWithPrevious && (
+          <span
+            className={`text-[11px] text-gray-400 font-medium mb-1 ${isMe ? "mr-1" : "ml-1"}`}
+          >
             {msg.senderName}
           </span>
         )}
         <div
-          className={`px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed
-          ${isMe ? "bg-gray-900 text-white rounded-br-sm" : "bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm"}`}
+          className={`px-3.5 py-2.5 text-[13px] leading-relaxed ${bubbleRadiusClasses}
+          ${isMe ? "bg-gray-900 text-white" : "bg-white border border-gray-100 text-gray-800 shadow-sm"}`}
         >
           {msg.text}
         </div>
-        <span className="text-[10px] text-gray-400 mt-1 mx-1 font-mono">
-          {formatMessageTime(msg.timestamp)}
-        </span>
+        {!isGroupedWithNext && (
+          <span className="text-[10px] text-gray-400 mt-1 mx-1 font-mono">
+            {formatMessageTime(msg.timestamp)}
+          </span>
+        )}
       </div>
-      {isMe && (
-        <div className="w-7 h-7 rounded-full bg-yellow-300 flex items-center justify-center text-[10px] font-bold text-yellow-900 shrink-0">
-          N
-        </div>
-      )}
+      {isMe && (isGroupedWithNext ? avatarSpacer : yellowAvatarEl)}
     </div>
   );
 }
@@ -703,22 +703,44 @@ export default function MessagesPage() {
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("chat");
   const [membersSidebarOpen, setMembersSidebarOpen] = useState(false);
-  const [messages, setMessages] =
-    useState<Record<string, Message[]>>(MOCK_MESSAGES);
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [photos, setPhotos] = useState<Record<string, Photo[]>>(MOCK_PHOTOS);
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
-  const [unread, setUnread] = useState<Record<string, number>>(INITIAL_UNREAD);
+  const [unread, setUnread] = useState<Record<string, number>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const activeEvent = events.find((e) => e.id === activeEventId) ?? null;
   const activeMessages = activeEventId ? (messages[activeEventId] ?? []) : [];
+  const sortedMessages = useMemo(
+    () =>
+      [...activeMessages].sort(
+        (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+      ),
+    [activeMessages],
+  );
   const activePhotos = activeEventId ? (photos[activeEventId] ?? []) : [];
-  const activeMembers = activeEventId
-    ? (MOCK_MEMBERS[activeEventId] ?? [])
-    : [];
+  const activeMembers: Member[] =
+    activeEvent && activeEvent.attendees.length > 0
+      ? activeEvent.attendees.map((attendeeId) => ({
+          id: attendeeId === currentUserId ? "you" : attendeeId,
+          name: attendeeId === currentUserId ? (user?.name ?? "You") : "…",
+          role:
+            attendeeId === activeEvent.created_by_user_id
+              ? "organizer"
+              : "volunteer",
+          online: attendeeId === currentUserId,
+        }))
+      : [];
   const onlineCount = activeMembers.filter((m) => m.online).length;
+
+  // Access control: only show chat if user has joined this event
+  const isAllowedToChat =
+    !!activeEvent &&
+    !!currentUserId &&
+    activeEvent.attendees.includes(currentUserId);
 
   // Only include chat groups the current user has joined and that haven't ended
   const now = new Date();
@@ -735,6 +757,39 @@ export default function MessagesPage() {
       e.title.toLowerCase().includes(search.toLowerCase()) ||
       e.address.toLowerCase().includes(search.toLowerCase()),
   );
+
+  // Fetch messages for the active room (event_id = room_id)
+  const fetchMessages = useCallback(
+    async (roomId: string) => {
+      setMessagesLoading(true);
+      try {
+        const { messages: raw } = await getChatMessages(roomId);
+        const list = raw.map((row) =>
+          mapApiMessageToMessage(row, currentUserId, user?.name),
+        );
+        setMessages((prev) => ({ ...prev, [roomId]: list }));
+      } catch {
+        setMessages((prev) => ({ ...prev, [roomId]: [] }));
+      } finally {
+        setMessagesLoading(false);
+      }
+    },
+    [currentUserId, user?.name],
+  );
+
+  useEffect(() => {
+    if (!activeEventId) return;
+    fetchMessages(activeEventId);
+  }, [activeEventId, fetchMessages]);
+
+  // Poll for new messages while chat tab is active
+  useEffect(() => {
+    if (!activeEventId || activeTab !== "chat" || !isAllowedToChat) return;
+    const t = setInterval(() => {
+      fetchMessages(activeEventId);
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(t);
+  }, [activeEventId, activeTab, isAllowedToChat, fetchMessages]);
 
   // If the active event is no longer in the joined list, clear the selection
   useEffect(() => {
@@ -761,20 +816,39 @@ export default function MessagesPage() {
     setTimeout(() => inputRef.current?.focus(), 50);
   }
 
-  function handleSend() {
-    if (!input.trim() || !activeEventId) return;
-    const newMsg: Message = {
-      id: `m${Date.now()}`,
+  async function handleSend() {
+    if (!input.trim() || !activeEventId || !currentUserId || !isAllowedToChat)
+      return;
+    const roomId = activeEventId;
+    const text = input.trim();
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg: Message = {
+      id: tempId,
       senderId: "you",
-      senderName: "You",
-      text: input.trim(),
+      senderName: user?.name ?? "You",
+      text,
       timestamp: new Date(),
     };
     setMessages((prev) => ({
       ...prev,
-      [activeEventId]: [...(prev[activeEventId] ?? []), newMsg],
+      [roomId]: [...(prev[roomId] ?? []), optimisticMsg],
     }));
     setInput("");
+    try {
+      const server = await sendChatMessage(roomId, text);
+      const mapped = mapApiMessageToMessage(server, currentUserId, user?.name);
+      setMessages((prev) => ({
+        ...prev,
+        [roomId]: (prev[roomId] ?? []).map((m) =>
+          m.id === tempId ? mapped : m,
+        ),
+      }));
+    } catch {
+      setMessages((prev) => ({
+        ...prev,
+        [roomId]: (prev[roomId] ?? []).filter((m) => m.id !== tempId),
+      }));
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -794,14 +868,23 @@ export default function MessagesPage() {
   return (
     <div className="flex flex-col h-screen bg-yellow-50 overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between bg-yellow-400 px-5 h-13 shrink-0">
-        <span className="text-[18px] font-semibold text-gray-900 tracking-tight">
-          <span className="inline-block w-6 h-6 bg-gray-900 rounded-full mr-2 align-middle mb-0.5" />
-          Lemon
-        </span>
+      <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-5 py-4 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/lemontree-logo.svg"
+              alt="Lemontree logo"
+              className="h-7 w-7 object-contain"
+            />
+          </div>
+          <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
+            Event Messages
+          </h1>
+        </div>
         <Link
           href="/hub"
-          className="rounded-full bg-purple-600 hover:bg-purple-700 transition-colors px-4 py-1.5 text-[12px] font-medium text-white"
+          className="rounded-full bg-primary-500 hover:bg-primary-600 transition-colors px-4 py-2 text-[12px] font-semibold text-white shadow-md"
         >
           ← Back to Explorer
         </Link>
@@ -924,20 +1007,56 @@ export default function MessagesPage() {
               {/* Tab content */}
               {activeTab === "chat" ? (
                 <>
-                  <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-hide">
-                    <div className="flex items-center gap-3 my-2">
-                      <hr className="flex-1 border-gray-100" />
-                      <span className="text-[11px] text-gray-400">Today</span>
-                      <hr className="flex-1 border-gray-100" />
-                    </div>
-                    {activeMessages.length === 0 ? (
-                      <p className="text-center text-[13px] text-gray-400 pt-8">
-                        No messages yet. Say hello!
-                      </p>
+                  <div className="flex-1 overflow-y-auto px-5 py-4 scrollbar-hide">
+                    {!isAllowedToChat ? (
+                      <div className="flex flex-col items-center justify-center gap-3 text-center pt-12 pb-6 px-4">
+                        <p className="text-[15px] text-gray-700 leading-relaxed">
+                          🍋 You must join this flyering event to view and send
+                          messages.
+                        </p>
+                      </div>
                     ) : (
-                      activeMessages.map((msg) => (
-                        <MessageBubble key={msg.id} msg={msg} />
-                      ))
+                      <>
+                        <div className="flex items-center gap-3 my-2">
+                          <hr className="flex-1 border-gray-100" />
+                          <span className="text-[11px] text-gray-400">
+                            Today
+                          </span>
+                          <hr className="flex-1 border-gray-100" />
+                        </div>
+                        {messagesLoading && activeMessages.length === 0 ? (
+                          <p className="text-center text-[13px] text-gray-400 pt-8">
+                            Loading messages…
+                          </p>
+                        ) : activeMessages.length === 0 ? (
+                          <p className="text-center text-[13px] text-gray-400 pt-8">
+                            No messages yet. Say hello!
+                          </p>
+                        ) : (
+                          sortedMessages.map((msg, index) => {
+                            const prev = sortedMessages[index - 1];
+                            const next = sortedMessages[index + 1];
+                            const isGroupedWithPrevious = !!(
+                              prev &&
+                              msg.senderId === prev.senderId &&
+                              msg.timestamp.getTime() - prev.timestamp.getTime() <= GROUP_WINDOW_MS
+                            );
+                            const isGroupedWithNext = !!(
+                              next &&
+                              msg.senderId === next.senderId &&
+                              next.timestamp.getTime() - msg.timestamp.getTime() <= GROUP_WINDOW_MS
+                            );
+                            return (
+                              <MessageBubble
+                                key={msg.id}
+                                msg={msg}
+                                isGroupedWithPrevious={isGroupedWithPrevious}
+                                isGroupedWithNext={isGroupedWithNext}
+                              />
+                            );
+                          })
+                        )}
+                      </>
                     )}
                     <div ref={bottomRef} />
                   </div>
@@ -949,11 +1068,12 @@ export default function MessagesPage() {
                       onKeyDown={handleKeyDown}
                       placeholder={`Message ${activeEvent.title.split(" ").slice(0, 2).join(" ")}…`}
                       rows={1}
-                      className="flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-2.5 text-[13px] text-gray-800 placeholder-gray-400 bg-gray-50 outline-none focus:border-gray-300 leading-relaxed max-h-28 overflow-y-auto scrollbar-hide"
+                      disabled={!isAllowedToChat}
+                      className="flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-2.5 text-[13px] text-gray-800 placeholder-gray-400 bg-gray-50 outline-none focus:border-gray-300 leading-relaxed max-h-28 overflow-y-auto scrollbar-hide disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                     <button
                       onClick={handleSend}
-                      disabled={!input.trim()}
+                      disabled={!input.trim() || !isAllowedToChat}
                       className="w-9 h-9 rounded-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center shrink-0"
                     >
                       <svg
