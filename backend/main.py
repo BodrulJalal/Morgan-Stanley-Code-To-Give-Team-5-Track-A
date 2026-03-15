@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import events, users, zesty, scoreboard
+from routers import events, users, zesty, scoreboard, chat
 
 app = FastAPI(title="API", version="1.0.0")
 
