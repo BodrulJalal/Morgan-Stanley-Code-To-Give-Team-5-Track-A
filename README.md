@@ -1,4 +1,4 @@
-# LemonLink Volunteer Flyering Hub
+# LemonLink
 
 LemonLink helps volunteers organize local flyering campaigns so more families can discover nearby food resources.  
 The core challenge is making campaign coordination simple and scalable without requiring staff to manually run each event.
