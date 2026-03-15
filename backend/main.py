@@ -16,6 +16,7 @@ app.add_middleware(
 app.include_router(events.router, prefix="/api/events", tags=["events"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(scoreboard.router, prefix="/api/scoreboard", tags=["scoreboard"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(zesty.router, prefix="/api/zesty", tags=["zesty"])
 
 @app.get("/")
