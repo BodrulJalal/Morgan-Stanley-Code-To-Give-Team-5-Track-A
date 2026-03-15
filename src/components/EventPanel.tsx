@@ -16,6 +16,7 @@ const initialForm: NewEventFormData = {
   lat: 40.7484,
   lng: -73.9857,
   date: "",
+  endDate: "",
   description: "",
 };
 
@@ -65,6 +66,22 @@ export function EventPanel({
         !form.description.trim()
       ) {
         setFormError("Please fill in all required fields, including description.");
+        return;
+      }
+
+      if (!form.endDate?.trim()) {
+        setFormError("Please select an end time for your event.");
+        return;
+      }
+
+      const start = new Date(form.date);
+      const end = new Date(form.endDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        setFormError("Please enter valid start and end times.");
+        return;
+      }
+      if (end <= start) {
+        setFormError("End time must be after the start time.");
         return;
       }
 
@@ -129,6 +146,11 @@ export function EventPanel({
               </h3>
               <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
                 {new Date(selectedEvent.start_time).toLocaleString("en-US", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}{" "}
+                –{" "}
+                {new Date(selectedEvent.end_time).toLocaleString("en-US", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}
@@ -220,17 +242,48 @@ export function EventPanel({
                   We&apos;ll automatically geocode this to coordinates using Mapbox.
                 </p>
               </div>
-              <div>
-                <label htmlFor="eventDate" className="block text-xs font-semibold uppercase tracking-wide text-slate-800">
-                  Date &amp; time
-                </label>
-                <input
-                  id="eventDate"
-                  type="datetime-local"
-                  value={form.date}
-                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="eventDate" className="block text-xs font-semibold uppercase tracking-wide text-slate-800">
+                    Start date &amp; time
+                  </label>
+                  <input
+                    id="eventDate"
+                    type="datetime-local"
+                    value={form.date}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setForm((f) => ({
+                        ...f,
+                        date: value,
+                        // If end time is empty or before new start, gently bump it to match start
+                        endDate:
+                          f.endDate && new Date(f.endDate) > new Date(value)
+                            ? f.endDate
+                            : value,
+                      }));
+                    }}
+                    className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="eventEndDate" className="block text-xs font-semibold uppercase tracking-wide text-slate-800">
+                    End date &amp; time
+                  </label>
+                  <input
+                    id="eventEndDate"
+                    type="datetime-local"
+                    value={form.endDate ?? ""}
+                    min={form.date || undefined}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        endDate: e.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                  />
+                </div>
               </div>
               <div>
                 <label htmlFor="eventDescription" className="block text-xs font-semibold uppercase tracking-wide text-slate-800">

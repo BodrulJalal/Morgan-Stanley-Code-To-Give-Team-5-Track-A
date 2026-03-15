@@ -147,6 +147,11 @@ export function VolunteerMap({
               {new Date(popupEvent.start_time).toLocaleString("en-US", {
                 dateStyle: "medium",
                 timeStyle: "short",
+              })}{" "}
+              –{" "}
+              {new Date(popupEvent.end_time).toLocaleString("en-US", {
+                dateStyle: "medium",
+                timeStyle: "short",
               })}
             </p>
             <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>

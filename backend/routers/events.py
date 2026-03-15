@@ -48,6 +48,7 @@ class EventUpdate(BaseModel):
 class AttendeeAdd(BaseModel):
 	pass  # user comes from JWT
 
+# Events
 
 @router.get("")
 def list_events (
@@ -122,6 +123,7 @@ def create_event(
 		raise HTTPException(status_code=500, detail="Failed to create (event)")
 	return result.data[0]
 
+# Newer endpoints
 
 @router.post("/{event_id}/attendees", status_code=201)
 def add_attendee(
@@ -162,3 +164,60 @@ def remove_attendee(
 		raise HTTPException(status_code=400, detail=str(e))
 	return {"ok": True}
 
+# Older endpoints
+@router.patch("/{event_id}")
+def update_event(event_id: str, updates: EventUpdate):
+
+	payload = {k: v for k, v in updates.model_dump().items() if v is not None}
+	if not payload:
+		raise HTTPException(staus_code=400, detail="No fields to update")
+
+	for field in ("start_time", "end_time"):
+		if field in payload and isinstance(payload[field], datetime):
+			payload[field] = payload[field].isoformat()
+
+	result = supabase.table("events").update(payload).eq("id", event_id).execute()
+	if not result.data:
+		raise HTTPException(staus_code=404, detail="Resource (event) not found")
+
+	return result.data[0]
+
+@router.delete("/{event_id}", status_code=204)
+def delete_event(event_id: str): 
+	supabase.table("events").delete().eq("id", event_id).execute()
+	return
+
+
+# Attendees
+
+@router.get("/{event_id}/attendees")
+def list_attendees(event_id: str):
+	result = (
+		supabase.table("event_attendees")
+		.select("user_id, joined_at, profiles(display_name, avatar_url)")
+		.eq("event_id", event_id)
+		.execute()
+
+	)
+
+	return {"attendees": result.data, "count": len(result.data)}
+
+@router.delete("/{event_id}/attendees/{user_id}", status_code=204)
+def leave_event(event_id: str, user_id: str): 
+	supabase.table("event_attendees").delete().eq("event_id", event_id).eq("user_id", user_id).execute()
+	return
+
+
+@router.post("/{event_id}/attendees", status_code=201)
+def join_event(event_id: str, body: AttendeeAdd):
+	event = supabase.table("events").select("id").eq("id", event_id).single().execute()
+
+	if not event.data:
+		raise HTTPException(status_code=404, detail="Resource (event) not found")
+
+	result = supabase.table("event_attendees").upsert(
+		{ "event_id": event_id, "user_id": body.user_id}, 
+		on_conflict = "event_id,user_id",
+	).execute()
+
+	return {"joined": True, "event_id": event_id, "user_id": body.user_id}
