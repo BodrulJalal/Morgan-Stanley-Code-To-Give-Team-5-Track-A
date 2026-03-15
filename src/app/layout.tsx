@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@mantine/core/styles.css";
 import { EventsProvider } from "@/context/EventsContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { VolunteerProgressProvider } from "@/context/VolunteerProgressContext";
+import { MantineProvider } from "@mantine/core";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +32,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} h-screen overflow-hidden antialiased bg-[#FCF8F2] text-slate-800`}
       >
-        <AuthProvider>
-          <EventsProvider>
-            <VolunteerProgressProvider>{children}</VolunteerProgressProvider>
-          </EventsProvider>
-        </AuthProvider>
+        <MantineProvider defaultColorScheme="light">
+          <AuthProvider>
+            <EventsProvider>
+              <VolunteerProgressProvider>{children}</VolunteerProgressProvider>
+            </EventsProvider>
+          </AuthProvider>
+        </MantineProvider>
       </body>
     </html>
   );
