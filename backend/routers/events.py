@@ -1,10 +1,12 @@
 from dotenv import load_dotenv
 from supabase import create_client, Client
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from typing import Optional
+from typing import Annotated, Optional
 from datetime import datetime
 import os
+
+from auth import get_current_user_id
 
 load_dotenv()
 
@@ -44,7 +46,7 @@ class EventUpdate(BaseModel):
 
 
 class AttendeeAdd(BaseModel):
-	user_id: str
+	pass  # user comes from JWT
 
 
 @router.get("")
@@ -95,13 +97,17 @@ def _is_rls_error(e: Exception) -> bool:
 
 
 @router.post("", status_code=201)
-def create_event(event: EventCreate):
+def create_event(
+	event: EventCreate,
+	user_id: Annotated[str, Depends(get_current_user_id)],
+):
 	payload = event.model_dump(exclude_none=True)
 	# DB column is "lng"; Pydantic uses "long"
 	if "long" in payload:
 		payload["lng"] = payload.pop("long")
 	payload["start_time"] = event.start_time.isoformat()
 	payload["end_time"] = event.end_time.isoformat()
+	payload["created_by_user_id"] = user_id
 
 	try:
 		result = supabase.table("events").insert(payload).execute()
@@ -118,8 +124,12 @@ def create_event(event: EventCreate):
 
 
 @router.post("/{event_id}/attendees", status_code=201)
-def add_attendee(event_id: str, body: AttendeeAdd):
-	row = {"event_id": event_id, "user_id": body.user_id}
+def add_attendee(
+	event_id: str,
+	body: AttendeeAdd,
+	user_id: Annotated[str, Depends(get_current_user_id)],
+):
+	row = {"event_id": event_id, "user_id": user_id}
 	try:
 		# Upsert so "already joined" is a no-op instead of 400
 		result = supabase.table("event_attendees").upsert(row, on_conflict="event_id, user_id").execute()
@@ -136,8 +146,11 @@ def add_attendee(event_id: str, body: AttendeeAdd):
 	return result.data[0] if isinstance(result.data, list) else result.data
 
 
-@router.delete("/{event_id}/attendees/{user_id}")
-def remove_attendee(event_id: str, user_id: str):
+@router.delete("/{event_id}/attendees/me")
+def remove_attendee(
+	event_id: str,
+	user_id: Annotated[str, Depends(get_current_user_id)],
+):
 	try:
 		supabase.table("event_attendees").delete().eq("event_id", event_id).eq("user_id", user_id).execute()
 	except Exception as e:

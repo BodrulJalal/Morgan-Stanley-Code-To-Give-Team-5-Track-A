@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import type { User, Session } from "@supabase/supabase-js";
 
 export type AuthUser = {
   id: string;
@@ -12,47 +14,55 @@ type AuthContextType = {
   user: AuthUser | null;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const STORAGE_KEY = "lemontree-auth-user";
+function userFromSupabase(user: User): AuthUser {
+  const name =
+    (user.user_metadata?.display_name as string | undefined) ||
+    (user.user_metadata?.name as string | undefined) ||
+    user.email?.split("@")[0] ||
+    "User";
+  return {
+    id: user.id,
+    name,
+    email: user.email ?? "",
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setUser(JSON.parse(stored));
-    } catch {
-      // ignore
-    }
-    setLoading(false);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? userFromSupabase(session.user) : null);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session: Session | null) => {
+      setUser(session?.user ? userFromSupabase(session.user) : null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Mock auth: accept any email/password, store user in localStorage
     if (!email || !password) return { ok: false, error: "Email and password are required." };
     if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
 
-    // Check if user exists in localStorage (from a previous signup)
-    const usersRaw = localStorage.getItem("lemontree-users");
-    const users: Array<AuthUser & { password: string }> = usersRaw ? JSON.parse(usersRaw) : [];
-    const match = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (match && match.password !== password) {
-      return { ok: false, error: "Incorrect password." };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      return { ok: false, error: error.message };
     }
-
-    const authUser: AuthUser = match
-      ? { id: match.id, name: match.name, email: match.email }
-      : { id: `vol_${Date.now()}`, name: email.split("@")[0], email };
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-    setUser(authUser);
+    if (data.user) {
+      setUser(userFromSupabase(data.user));
+    }
     return { ok: true };
   }, []);
 
@@ -60,24 +70,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!name || !email || !password) return { ok: false, error: "All fields are required." };
     if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
 
-    const usersRaw = localStorage.getItem("lemontree-users");
-    const users: Array<AuthUser & { password: string }> = usersRaw ? JSON.parse(usersRaw) : [];
-    if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
-      return { ok: false, error: "An account with this email already exists." };
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: name },
+      },
+    });
+    if (error) {
+      return { ok: false, error: error.message };
     }
-
-    const newUser = { id: `vol_${Date.now()}`, name, email, password };
-    users.push(newUser);
-    localStorage.setItem("lemontree-users", JSON.stringify(users));
-
-    const authUser: AuthUser = { id: newUser.id, name, email };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-    setUser(authUser);
+    if (data.user) {
+      setUser(userFromSupabase(data.user));
+    }
     return { ok: true };
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
   }, []);
 

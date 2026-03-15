@@ -16,7 +16,9 @@ import {
   type ApiEventRow,
   type ApiError,
 } from "@/lib/api";
+import { isUserJoined } from "@/lib/attendance";
 import type { FlyeringEvent } from "@/types/events";
+import { useAuth } from "@/context/AuthContext";
 
 const MAX_SPOTS = 20;
 
@@ -45,15 +47,17 @@ type EventsContextValue = {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  toggleJoin: (eventId: string, userId: string) => Promise<void>;
+  toggleJoin: (eventId: string) => Promise<void>;
 };
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
 
 export function EventsProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [events, setEvents] = useState<FlyeringEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const currentUserId = user?.id ?? null;
 
   const refetch = useCallback(async () => {
     setError(null);
@@ -76,35 +80,38 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     refetch();
   }, [refetch]);
 
-  const toggleJoin = useCallback(async (eventId: string, userId: string) => {
-    const event = events.find((e) => e.id === eventId);
-    if (!event) return;
-    const isJoined = event.attendees.includes(userId);
-    // Never call join when already in attendees (prevent double-join)
-    if (isJoined) {
+  const toggleJoin = useCallback(
+    async (eventId: string) => {
+      if (!currentUserId) return;
+      const event = events.find((e) => e.id === eventId);
+      if (!event) return;
+      const joined = isUserJoined(event, currentUserId);
+      if (joined) {
+        try {
+          await leaveEvent(eventId);
+          await refetch();
+        } catch (err) {
+          const apiErr = err as ApiError;
+          setError(
+            apiErr?.message ??
+              (err instanceof Error ? err.message : "Failed to leave event")
+          );
+        }
+        return;
+      }
       try {
-        await leaveEvent(eventId, userId);
+        await joinEvent(eventId);
         await refetch();
       } catch (err) {
         const apiErr = err as ApiError;
         setError(
           apiErr?.message ??
-            (err instanceof Error ? err.message : "Failed to leave event")
+            (err instanceof Error ? err.message : "Failed to update attendance")
         );
       }
-      return;
-    }
-    try {
-      await joinEvent(eventId, userId);
-      await refetch();
-    } catch (err) {
-      const apiErr = err as ApiError;
-      setError(
-        apiErr?.message ??
-          (err instanceof Error ? err.message : "Failed to update attendance")
-      );
-    }
-  }, [events, refetch]);
+    },
+    [events, refetch, currentUserId]
+  );
 
   const value = useMemo<EventsContextValue>(
     () => ({

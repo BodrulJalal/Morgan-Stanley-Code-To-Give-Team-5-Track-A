@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { createEvent, type ApiError } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 function toDatetimeLocal(d: Date) {
   const y = d.getFullYear();
@@ -14,11 +15,9 @@ function toDatetimeLocal(d: Date) {
   return `${y}-${m}-${day}T${h}:${min}`;
 }
 
-// Placeholder until Supabase Auth is integrated; use for created_by_user_id (must be valid UUID)
-const MOCK_CREATOR_USER_ID = "00000000-0000-0000-0000-000000000001";
-
 export default function OrganizerPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [form, setForm] = useState({
     title: "",
     address: "",
@@ -35,6 +34,13 @@ export default function OrganizerPage() {
 
   const [minDatetime, setMinDatetime] = useState("");
   const [maxDatetime, setMaxDatetime] = useState("");
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+  }, [user, authLoading, router]);
   useEffect(() => {
     const now = new Date();
     now.setSeconds(0, 0);
@@ -114,7 +120,6 @@ export default function OrganizerPage() {
           start_time: startTime,
           end_time: endTime,
           organizer_name: form.organization.trim() || "",
-          created_by_user_id: MOCK_CREATOR_USER_ID,
         });
 
         router.push("/hub");
