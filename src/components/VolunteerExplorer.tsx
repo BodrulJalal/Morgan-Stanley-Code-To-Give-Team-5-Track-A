@@ -33,7 +33,11 @@ export function VolunteerExplorer() {
 
   const filteredEvents = useMemo(() => {
     const now = new Date();
-    let futureEvents = events.filter((e) => new Date(e.start_time) > now);
+    // Treat an event as upcoming/active as long as its end_time is in the future;
+    // fall back to start_time if end_time is missing for legacy rows.
+    let futureEvents = events.filter((e) =>
+      new Date(e.end_time || e.start_time) > now
+    );
 
     if (showOnlyJoined) {
       if (!currentUserId) {
@@ -333,6 +337,11 @@ export function VolunteerExplorer() {
                     {new Date(selectedEvent.start_time).toLocaleString("en-US", {
                       dateStyle: "medium",
                       timeStyle: "short",
+                    })}{" "}
+                    –{" "}
+                    {new Date(selectedEvent.end_time).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
                     })}
                   </p>
                   {selectedEvent.organizer_name ? (
@@ -408,6 +417,11 @@ export function VolunteerExplorer() {
                             {new Date(event.start_time).toLocaleString("en-US", {
                               dateStyle: "medium",
                               timeStyle: "short",
+                            })}{" "}
+                            –{" "}
+                            {new Date(event.end_time).toLocaleString("en-US", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
                             })}
                           </p>
                           <p
@@ -438,7 +452,9 @@ export function VolunteerExplorer() {
                       ? "You haven't joined any events yet! Turn off this filter to explore upcoming flyering campaigns."
                       : events.length === 0
                         ? "No events yet. Be the first to create one in the Organizer Hub."
-                        : !events.some((e) => new Date(e.start_time) > new Date())
+                        : !events.some(
+                            (e) => new Date(e.end_time || e.start_time) > new Date()
+                          )
                           ? "No upcoming events right now."
                           : "No events match your search. Try a different term."}
                   </p>

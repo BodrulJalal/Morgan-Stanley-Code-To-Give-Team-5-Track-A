@@ -21,8 +21,12 @@ function buildContext(
   stats: ResourceStats | null
 ): string {
   const now = new Date();
-  const upcoming = events.filter((e) => new Date(e.start_time) > now);
-  const past = events.filter((e) => new Date(e.start_time) <= now);
+  const upcoming = events.filter(
+    (e) => new Date(e.end_time || e.start_time) > now
+  );
+  const past = events.filter(
+    (e) => new Date(e.end_time || e.start_time) <= now
+  );
   const totalAttendees = events.reduce((sum, e) => sum + e.attendees.length, 0);
   const avgAttendees = events.length > 0 ? (totalAttendees / events.length).toFixed(1) : "0";
   const coverageRatio =
@@ -34,7 +38,13 @@ function buildContext(
     .slice(0, 20)
     .map(
       (e) =>
-        `- "${e.title}" @ ${e.address}, ${e.city} | ${new Date(e.start_time).toLocaleString()} | ${e.attendees.length}/20 attendees | organizer: ${e.organizer_name}`
+        `- "${e.title}" @ ${e.address}, ${e.city} | ${new Date(
+          e.start_time
+        ).toLocaleString()} – ${new Date(
+          e.end_time
+        ).toLocaleString()} | ${e.attendees.length}/20 attendees | organizer: ${
+          e.organizer_name
+        }`
     )
     .join("\n");
 

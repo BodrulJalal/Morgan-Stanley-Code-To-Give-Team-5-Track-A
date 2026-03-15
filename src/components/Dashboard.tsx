@@ -19,9 +19,8 @@ export function Dashboard() {
 
   const handleCreateEvent = useCallback((data: NewEventFormData) => {
     const startTime = new Date(data.date).toISOString();
-    const endTime = new Date(
-      new Date(data.date).getTime() + 2 * 60 * 60 * 1000
-    ).toISOString();
+    const endSource = data.endDate && data.endDate.trim().length > 0 ? data.endDate : data.date;
+    const endTime = new Date(endSource).toISOString();
     const newEvent: FlyeringEvent = {
       id: generateId(),
       title: data.eventName.trim(),
