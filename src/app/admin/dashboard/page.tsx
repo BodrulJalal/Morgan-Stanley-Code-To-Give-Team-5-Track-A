@@ -1,17 +1,14 @@
 "use client";
 
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Container, Loader, Stack, Text, Title } from "@mantine/core";
 import { ZestyAdminAssistant } from "@/components/ZestyAdminAssistant";
 import { ResourceNetworkSection } from "@/components/admin/ResourceNetworkSection";
 import { VolunteerEngagementKpisSection } from "@/components/admin/VolunteerEngagementKpisSection";
-import {
-  mockAdminMetrics,
-  mockCoverageRatio,
-  mockEvents,
-  mockResourceStats,
-} from "@/components/data/adminMockData";
+import { useAdminData } from "@/context/AdminDataContext";
 
 export default function AdminDashboardPage() {
+  const { events, metrics, resourceStats, coverageRatio, loading, error } = useAdminData();
+
   return (
     <>
       <Container size="xl" py="md">
@@ -25,16 +22,20 @@ export default function AdminDashboardPage() {
           </div>
 
           <ResourceNetworkSection
-            eventsCount={mockEvents.length}
-            coverageRatio={mockCoverageRatio}
-            loading={false}
-            error={null}
-            stats={mockResourceStats}
+            eventsCount={events.length}
+            coverageRatio={coverageRatio}
+            loading={loading}
+            error={error}
+            stats={resourceStats}
           />
-          <VolunteerEngagementKpisSection metrics={mockAdminMetrics} />
+          {loading ? (
+            <Loader size="sm" />
+          ) : metrics ? (
+            <VolunteerEngagementKpisSection metrics={metrics} />
+          ) : null}
         </Stack>
       </Container>
-      <ZestyAdminAssistant resourceStats={mockResourceStats} />
+      <ZestyAdminAssistant resourceStats={resourceStats ?? null} />
     </>
   );
 }

@@ -1,77 +1,89 @@
 "use client";
 
-import { AppShell, MantineProvider, createTheme } from "@mantine/core";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminDataProvider } from "@/context/AdminDataContext";
 
-const adminTheme = createTheme({
-  fontFamily: "var(--font-geist-sans), sans-serif",
-  fontFamilyMonospace: "var(--font-geist-mono), monospace",
-  headings: {
-    fontFamily: "var(--font-geist-sans), sans-serif",
-    fontWeight: "700",
-  },
-  primaryColor: "orange",
-  colors: {
-    orange: [
-      "#fff4e7",
-      "#ffe7cc",
-      "#ffd3a3",
-      "#ffbe78",
-      "#ffab52",
-      "#ff9f3d",
-      "#ff972f",
-      "#e38220",
-      "#ca7317",
-      "#b0610b",
-    ],
-    violet: [
-      "#f4e9ff",
-      "#e6d0ff",
-      "#cda0ff",
-      "#b36dff",
-      "#9d42ff",
-      "#9027ff",
-      "#8918ff",
-      "#7610e3",
-      "#680bc9",
-      "#5705af",
-    ],
-  },
-  defaultGradient: {
-    from: "orange.5",
-    to: "violet.5",
-    deg: 115,
-  },
-});
+const navItems = [
+  { label: "Dashboard", href: "/admin/dashboard" },
+  { label: "Analytics", href: "/admin/analytics" },
+  { label: "Contacts", href: "/admin/contacts" },
+  { label: "Reports", href: "/admin/reports" },
+];
+
+function AdminSidebar() {
+  const pathname = usePathname();
+  return (
+    <aside className="w-56 shrink-0 bg-yellow-50 border-r border-yellow-200 flex flex-col overflow-hidden">
+      <div className="px-4 pt-5 pb-3 shrink-0">
+        <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase mb-3">
+          Admin Menu
+        </p>
+        <nav className="space-y-0.5">
+          {navItems.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`block px-3 py-2 rounded-xl text-[13px] font-medium transition-colors ${
+                  active
+                    ? "bg-white border border-yellow-200 shadow-sm text-gray-900"
+                    : "text-gray-600 hover:bg-white/70 hover:text-gray-900"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="mt-auto px-4 pb-5">
+        <Link
+          href="/hub"
+          className="block px-3 py-2 rounded-xl text-[13px] font-medium text-gray-500 hover:bg-white/70 hover:text-gray-900 transition-colors"
+        >
+          ← Back to Explorer
+        </Link>
+      </div>
+    </aside>
+  );
+}
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <MantineProvider theme={adminTheme}>
-      <AppShell
-        navbar={{ width: 260, breakpoint: "sm" }}
-        padding="md"
-        styles={{
-          root: {
-            fontFamily: "var(--font-geist-sans), sans-serif",
-          },
-          navbar: {
-            fontFamily: "var(--font-geist-sans), sans-serif",
-          },
-          main: {
-            background: "var(--mantine-color-gray-0)",
-            height: "100vh",
-            overflowY: "auto",
-            fontFamily: "var(--font-geist-sans), sans-serif",
-          },
-        }}
-      >
-        <AppShell.Navbar p={0}>
-          <AdminSidebar />
-        </AppShell.Navbar>
+    <div className="flex flex-col h-screen bg-yellow-50 overflow-hidden">
+      {/* Header */}
+      <header className="flex items-center justify-between bg-yellow-400 px-5 py-3 shrink-0 border-b border-yellow-300 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-yellow-300 shadow-sm">
+            <span className="text-lg" aria-hidden="true">🍋</span>
+          </div>
+          <div>
+            <h1 className="text-base font-extrabold tracking-tight text-slate-800 leading-tight">
+              Admin Dashboard
+            </h1>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-700/70">
+              Analytics &amp; Network Overview
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/hub"
+          className="rounded-full bg-purple-600 px-4 py-1.5 text-[12px] font-medium text-white hover:bg-purple-700 transition-colors"
+        >
+          ← Back to Explorer
+        </Link>
+      </header>
 
-        <AppShell.Main>{children}</AppShell.Main>
-      </AppShell>
-    </MantineProvider>
+      {/* Body */}
+      <div className="flex flex-1 overflow-hidden">
+        <AdminSidebar />
+        <main className="flex-1 overflow-y-auto bg-gray-50">
+          <AdminDataProvider>{children}</AdminDataProvider>
+        </main>
+      </div>
+    </div>
   );
 }

@@ -35,15 +35,13 @@ export function ResourceNetworkSection({
       <Title order={5} fz="xs" tt="uppercase" c="dimmed" mb="sm">
         Lemontree Resource Network
       </Title>
-      <SimpleGrid cols={{ base: 1, sm: coverageRatio != null ? 2 : 1 }} spacing="sm" mb="sm">
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="sm">
         <StatCard label="Total events" value={eventsCount} />
-        {coverageRatio != null ? (
-          <StatCard
-            label="Network coverage"
-            value={`${coverageRatio}%`}
-            sub="flyering events vs total resources"
-          />
-        ) : null}
+        <StatCard
+          label="Network coverage"
+          value={coverageRatio != null ? `${coverageRatio}%` : "—"}
+          sub="flyering events vs total resources"
+        />
       </SimpleGrid>
       {loading ? (
         <Text fz="sm" c="dimmed" inline>

@@ -1,11 +1,13 @@
 "use client";
 
-import { Container, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { Container, Loader, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { EngagementHeatmapAndRecurringSection } from "@/components/admin/EngagementHeatmapAndRecurringSection";
 import { ParticipationDistributionSection } from "@/components/admin/ParticipationDistributionSection";
-import { mockAdminMetrics } from "@/components/data/adminMockData";
+import { useAdminData } from "@/context/AdminDataContext";
 
 export default function RetentionAnalyticsPage() {
+  const { metrics, loading } = useAdminData();
+
   return (
     <Container size="xl" py="md">
       <Stack gap="lg">
@@ -16,18 +18,22 @@ export default function RetentionAnalyticsPage() {
           </Text>
         </div>
 
-        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
-          <EngagementHeatmapAndRecurringSection
-            metrics={mockAdminMetrics}
-            showHeatmap={false}
-            showRecurring
-          />
-          <ParticipationDistributionSection
-            metrics={mockAdminMetrics}
-            showHistogram={false}
-            showFirstTimeReturning
-          />
-        </SimpleGrid>
+        {loading || !metrics ? (
+          <Loader size="sm" />
+        ) : (
+          <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
+            <EngagementHeatmapAndRecurringSection
+              metrics={metrics}
+              showHeatmap={false}
+              showRecurring
+            />
+            <ParticipationDistributionSection
+              metrics={metrics}
+              showHistogram={false}
+              showFirstTimeReturning
+            />
+          </SimpleGrid>
+        )}
       </Stack>
     </Container>
   );

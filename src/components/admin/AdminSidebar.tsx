@@ -14,6 +14,7 @@ import {
   Title,
 } from "@mantine/core";
 import {
+  IconArrowLeft,
   IconCalendarEvent,
   IconChartBar,
   IconDashboard,
@@ -121,6 +122,19 @@ export function AdminSidebar() {
             ))}
           </Stack>
         </ScrollArea>
+      </Box>
+
+      <Box px="md" py="sm" style={{ borderTop: "1px solid var(--mantine-color-gray-2)" }}>
+        <NavLink
+          component={Link}
+          href="/"
+          label="Back to Explorer"
+          leftSection={
+            <ThemeIcon variant="light" color="gray">
+              <IconArrowLeft size={14} />
+            </ThemeIcon>
+          }
+        />
       </Box>
     </Box>
   );

@@ -1,11 +1,13 @@
 "use client";
 
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Container, Loader, Stack, Text, Title } from "@mantine/core";
 import { ParticipationDistributionSection } from "@/components/admin/ParticipationDistributionSection";
 import { WeeklyEngagementTrendSection } from "@/components/admin/WeeklyEngagementTrendSection";
-import { mockAdminMetrics } from "@/components/data/adminMockData";
+import { useAdminData } from "@/context/AdminDataContext";
 
 export default function ParticipationAnalyticsPage() {
+  const { metrics, loading } = useAdminData();
+
   return (
     <Container size="xl" py="md">
       <Stack gap="lg">
@@ -16,8 +18,14 @@ export default function ParticipationAnalyticsPage() {
           </Text>
         </div>
 
-        <WeeklyEngagementTrendSection metrics={mockAdminMetrics} />
-        <ParticipationDistributionSection metrics={mockAdminMetrics} />
+        {loading || !metrics ? (
+          <Loader size="sm" />
+        ) : (
+          <>
+            <WeeklyEngagementTrendSection metrics={metrics} />
+            <ParticipationDistributionSection metrics={metrics} />
+          </>
+        )}
       </Stack>
     </Container>
   );
