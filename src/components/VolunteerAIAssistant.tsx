@@ -100,7 +100,7 @@ export function VolunteerAIAssistant() {
           <div className="flex max-h-90 min-h-40 flex-col gap-3 overflow-y-auto bg-slate-50/50 p-4">
             {messages.length === 0 && (
               <p className="text-sm text-slate-400">
-                Hi! I&apos;m Zesty 🍋 Ask me about upcoming events, how to post flyers, or how points work.
+                Hi! I&apos;m Zesty. Ask me about upcoming events, how to post flyers, or how points work.
               </p>
             )}
             {messages.map((msg, i) => (
@@ -111,7 +111,7 @@ export function VolunteerAIAssistant() {
                 <div
                   className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-purple-600 text-white"
+                      ? "bg-primary-500 text-white"
                       : "bg-white text-slate-800 shadow-sm ring-1 ring-slate-100"
                   }`}
                 >
@@ -144,12 +144,12 @@ export function VolunteerAIAssistant() {
               placeholder="Type a message…"
               aria-label="Message"
               disabled={loading}
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="shrink-0 rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-purple-700 disabled:opacity-50"
+              className="shrink-0 rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-primary-600 disabled:opacity-50"
             >
               Send
             </button>
@@ -161,7 +161,7 @@ export function VolunteerAIAssistant() {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-300 bg-yellow-400 shadow-lg ring-2 ring-yellow-500/50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-300 bg-yellow-400 shadow-lg ring-2 ring-yellow-500/50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         aria-label={isOpen ? "Close Zesty" : "Open Zesty"}
         aria-expanded={isOpen}
       >

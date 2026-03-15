@@ -22,8 +22,8 @@ function EventPin({ hasSpots, isJoined }: { hasSpots: boolean; isJoined: boolean
       type="button"
       className={`flex h-10 w-10 items-center justify-center rounded-full text-lg ring-2 transition-shadow duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 focus:ring-offset-yellow-100 disabled:cursor-not-allowed disabled:opacity-60 ${
         isJoined
-          ? "bg-purple-100 border-2 border-purple-400 shadow-purple-300/40 ring-purple-200"
-          : "bg-white border-2 border-yellow-200 shadow-md ring-emerald-300/60"
+          ? "bg-primary-100 border-4 border-primary-500 shadow-primary-500/50 ring-primary-300"
+          : "bg-white border-2 border-transparent shadow-md ring-yellow-400/70"
       }`}
       aria-label={hasSpots ? "View event with open spots" : "View full event"}
     >
@@ -31,7 +31,7 @@ function EventPin({ hasSpots, isJoined }: { hasSpots: boolean; isJoined: boolean
         <span
           className={`absolute h-8 w-8 rounded-full animate-pulse ${
             isJoined
-              ? "bg-purple-300/60"
+              ? "bg-primary-300/60"
               : hasSpots
                 ? "bg-emerald-300/40"
                 : "bg-slate-400/30"

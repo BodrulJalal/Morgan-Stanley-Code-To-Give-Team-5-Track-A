@@ -38,7 +38,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-yellow-200 bg-yellow-400/95 px-6 py-3 shadow-md backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow-300 shadow-sm">
-            <span className="text-xl" aria-hidden="true">🍋</span>
+            <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-6 w-6 object-contain" />
           </div>
           <span className="text-lg font-extrabold tracking-tight text-slate-800">Lemontree</span>
         </Link>
@@ -51,7 +51,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/signup"
-            className="rounded-full bg-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-purple-700"
+            className="rounded-full bg-primary-500 px-5 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-primary-600"
           >
             Sign up free
           </Link>
@@ -65,7 +65,7 @@ export default function LandingPage() {
           <div className="h-[480px] w-[480px] rounded-full bg-yellow-300/30 blur-3xl" />
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0">
-          <div className="h-72 w-72 rounded-full bg-purple-200/30 blur-3xl" />
+          <div className="h-72 w-72 rounded-full bg-primary-200/30 blur-3xl" />
         </div>
 
         <div className="relative mx-auto max-w-3xl">
@@ -74,7 +74,7 @@ export default function LandingPage() {
           </span>
           <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
             Spread the word about{" "}
-            <span className="text-purple-600">food resources</span>{" "}
+            <span className="text-primary-500">food resources</span>{" "}
             in your community
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg text-slate-600">
@@ -83,13 +83,13 @@ export default function LandingPage() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/signup"
-              className="rounded-full bg-purple-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-purple-700 hover:shadow-purple-200 hover:shadow-xl"
+              className="rounded-full bg-primary-500 px-8 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-primary-600 hover:shadow-primary-200 hover:shadow-xl"
             >
               Get started — it&apos;s free
             </Link>
             <Link
               href="/hub"
-              className="rounded-full border border-slate-200 bg-white px-8 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-purple-300 hover:shadow-md"
+              className="rounded-full border border-slate-200 bg-white px-8 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-primary-300 hover:shadow-md"
             >
               Browse events
             </Link>
@@ -106,7 +106,7 @@ export default function LandingPage() {
             { value: "10K+", label: "Families reached" },
           ].map((s) => (
             <div key={s.label} className="px-6 py-6 text-center">
-              <p className="text-2xl font-extrabold text-purple-600">{s.value}</p>
+              <p className="text-2xl font-extrabold text-primary-500">{s.value}</p>
               <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-slate-500">{s.label}</p>
             </div>
           ))}
@@ -126,7 +126,7 @@ export default function LandingPage() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="group rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-purple-200 hover:shadow-lg"
+                className="group rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary-200 hover:shadow-lg"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-2xl shadow-sm group-hover:bg-yellow-200 transition-colors">
                   {f.icon}
@@ -166,14 +166,14 @@ export default function LandingPage() {
       </section>
 
       {/* CTA banner */}
-      <section className="relative overflow-hidden bg-purple-600 px-6 py-16 text-center text-white">
+      <section className="relative overflow-hidden bg-primary-500 px-6 py-16 text-center text-white">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-purple-500/50 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-purple-700/50 blur-3xl" />
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary-500/50 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-primary-500/50 blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-2xl">
           <p className="text-3xl font-extrabold tracking-tight">Ready to make a difference?</p>
-          <p className="mt-3 text-sm text-purple-200">
+          <p className="mt-3 text-sm text-primary-200">
             Join hundreds of volunteers already using Lemontree to connect families with food resources.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -197,7 +197,7 @@ export default function LandingPage() {
       <footer className="border-t border-yellow-200 bg-yellow-50 px-6 py-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-xs text-slate-500 sm:flex-row">
           <div className="flex items-center gap-2">
-            <span className="text-base" aria-hidden="true">🍋</span>
+            <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-5 w-5 object-contain" />
             <span className="font-semibold text-slate-700">Lemontree Volunteer Hub</span>
           </div>
           <p>Helping communities access food resources — one flyer at a time.</p>

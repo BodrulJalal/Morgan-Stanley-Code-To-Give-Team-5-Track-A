@@ -67,7 +67,7 @@ export function AdminSidebar() {
       <Box px="md" py="lg" bg="yellow.6">
         <Group gap="sm">
           <Avatar
-            src="/lemon-mascot.png"
+            src="/lemontree-logo.svg"
             alt="Lemontree profile"
             radius="xl"
             size="md"
@@ -109,7 +109,7 @@ export function AdminSidebar() {
                         leftSection={
                           <ThemeIcon
                             variant={active ? "filled" : "light"}
-                            color={active ? "violet" : "gray"}
+                            color={active ? "blue" : "gray"}
                           >
                             <item.icon size={14} />
                           </ThemeIcon>

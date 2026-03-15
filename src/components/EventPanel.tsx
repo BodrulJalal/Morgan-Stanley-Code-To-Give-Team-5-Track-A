@@ -172,7 +172,7 @@ export function EventPanel({
               <button
                 type="button"
                 onClick={onClearSelection}
-                className="mt-2 text-xs font-medium text-purple-700 hover:underline"
+                className="mt-2 text-xs font-medium text-primary-600 hover:underline"
               >
                 Close details
               </button>
@@ -192,7 +192,7 @@ export function EventPanel({
                 type="button"
                 onClick={handleDownloadFlyer}
                 disabled={flyerLoading}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-60"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:opacity-60"
               >
                 {flyerLoading ? (
                   <>
@@ -223,7 +223,7 @@ export function EventPanel({
                   value={form.eventName}
                   onChange={(e) => setForm((f) => ({ ...f, eventName: e.target.value }))}
                   placeholder="e.g. Harlem Community Flyering"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
                 />
               </div>
               <div>
@@ -236,7 +236,7 @@ export function EventPanel({
                   value={form.address}
                   onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="e.g. 123 Main St, Brooklyn, NY"
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
                 />
                 <p className="mt-1 text-[11px] text-slate-500">
                   We&apos;ll automatically geocode this to coordinates using Mapbox.
@@ -263,7 +263,7 @@ export function EventPanel({
                             : value,
                       }));
                     }}
-                    className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                    className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
                   />
                 </div>
                 <div>
@@ -281,7 +281,7 @@ export function EventPanel({
                         endDate: e.target.value,
                       }))
                     }
-                    className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                    className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
                   />
                 </div>
               </div>
@@ -295,7 +295,7 @@ export function EventPanel({
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="Tell volunteers what this flyering action is about, who you’re trying to reach, and any instructions."
                   rows={3}
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
                   required
                 />
                 <p className="mt-1 text-[11px] text-slate-500">
@@ -305,7 +305,7 @@ export function EventPanel({
               <button
                 type="submit"
                 disabled={isGeocoding}
-                className="w-full rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-amber-50 disabled:opacity-70"
+                className="w-full rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-amber-50 disabled:opacity-70"
               >
                 {isGeocoding ? "Creating event…" : "Create event"}
               </button>

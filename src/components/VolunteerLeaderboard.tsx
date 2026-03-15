@@ -77,7 +77,7 @@ export function VolunteerLeaderboard({
             {isExpanded ? "Hide Full Board" : "Full Board"}
           </button>
 
-          <div className="rounded-xl bg-purple-600/90 px-3 py-1.5 text-white shadow-sm">
+          <div className="rounded-xl bg-primary-500/90 px-3 py-1.5 text-white shadow-sm">
             <p className="text-[10px] uppercase tracking-[0.2em] text-white/80">
               Total points
             </p>

@@ -160,9 +160,7 @@ export function VolunteerExplorer() {
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
-            <span className="text-2xl leading-none" aria-hidden="true">
-              🍋
-            </span>
+            <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-7 w-7 object-contain" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
@@ -182,13 +180,13 @@ export function VolunteerExplorer() {
           </a>
           <a
             href="/messages"
-            className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
+            className="rounded-full bg-primary-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600"
           >
             Messages
           </a>
           <a
             href="/organizer"
-            className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
+            className="rounded-full bg-primary-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600"
           >
             Create Event
           </a>
@@ -228,7 +226,7 @@ export function VolunteerExplorer() {
                 onClick={() => setShowOnlyJoined((prev) => !prev)}
                 className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold transition-colors duration-150 ${
                   showOnlyJoined
-                    ? "bg-purple-600 text-white shadow-md"
+                    ? "bg-primary-500 text-white shadow-md"
                     : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
@@ -241,7 +239,7 @@ export function VolunteerExplorer() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search events…"
               aria-label="Search events by title, address, organizer, or city"
-              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
             />
           </div>
 
@@ -254,7 +252,7 @@ export function VolunteerExplorer() {
                 <button
                   type="button"
                   onClick={() => refetch()}
-                  className="mt-2 text-xs font-semibold text-purple-600 hover:underline"
+                  className="mt-2 text-xs font-semibold text-primary-500 hover:underline"
                 >
                   Try again
                 </button>
@@ -270,8 +268,8 @@ export function VolunteerExplorer() {
                       key={event.id}
                       className={`rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
                         isActive
-                          ? "border-purple-500 bg-purple-50/70"
-                          : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                          ? "border-primary-500 bg-primary-50/70"
+                          : "border-slate-100 bg-white hover:border-primary-200 hover:bg-primary-50/40"
                       }`}
                     >
                       <button
@@ -283,14 +281,14 @@ export function VolunteerExplorer() {
                           <div className="min-w-0 flex-1">
                             <h3
                               className={`truncate text-sm font-semibold ${
-                                isActive ? "text-purple-800" : "text-slate-800"
+                                isActive ? "text-primary-800" : "text-slate-800"
                               }`}
                             >
                               {event.title}
                             </h3>
                             <p
                               className={`mt-0.5 text-xs ${
-                                isActive ? "text-purple-700" : "text-slate-500"
+                                isActive ? "text-primary-600" : "text-slate-500"
                               }`}
                             >
                               {new Date(event.start_time).toLocaleString("en-US", {
@@ -305,7 +303,7 @@ export function VolunteerExplorer() {
                             </p>
                             <p
                               className={`mt-0.5 line-clamp-1 text-xs ${
-                                isActive ? "text-purple-700" : "text-slate-600"
+                                isActive ? "text-primary-600" : "text-slate-600"
                               }`}
                             >
                               {event.address}
@@ -314,7 +312,7 @@ export function VolunteerExplorer() {
                           <span
                             className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
                               isActive
-                                ? "bg-purple-100 text-purple-700"
+                                ? "bg-primary-100 text-primary-600"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >
@@ -368,7 +366,7 @@ export function VolunteerExplorer() {
                                   type="button"
                                   onClick={() => handleJoin(event.id)}
                                   disabled={joinLoadingId === event.id || !currentUserId}
-                                  className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70"
+                                  className="rounded-full bg-primary-500 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:opacity-70"
                                 >
                                   {joinLoadingId === event.id ? (
                                     <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -383,7 +381,7 @@ export function VolunteerExplorer() {
                                 type="button"
                                 onClick={handleOpenTutorial}
                                 disabled={flyerLoading}
-                                className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-full bg-primary-500 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {flyerLoading ? "Generating..." : "Download Area Flyer"}
                               </button>
@@ -437,7 +435,7 @@ export function VolunteerExplorer() {
                                 <button
                                   type="button"
                                   onClick={() => setShowFullDetails((prev) => !prev)}
-                                  className="mt-1 text-xs font-semibold text-purple-600 hover:underline"
+                                  className="mt-1 text-xs font-semibold text-primary-500 hover:underline"
                                 >
                                   {showFullDetails ? "Show less" : "Show more"}
                                 </button>
