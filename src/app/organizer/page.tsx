@@ -117,7 +117,7 @@ export default function OrganizerPage() {
           created_by_user_id: MOCK_CREATOR_USER_ID,
         });
 
-        router.push("/");
+        router.push("/hub");
       } catch (err) {
         const apiErr = err as ApiError;
         const message =
@@ -150,7 +150,7 @@ export default function OrganizerPage() {
           </div>
         </div>
         <Link
-          href="/"
+          href="/hub"
           className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
         >
           Back to Explorer

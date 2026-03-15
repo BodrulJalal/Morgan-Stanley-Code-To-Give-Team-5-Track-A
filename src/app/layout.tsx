@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { EventsProvider } from "@/context/EventsContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { VolunteerProgressProvider } from "@/context/VolunteerProgressContext";
 
 const geistSans = Geist({
@@ -29,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} h-screen overflow-hidden antialiased bg-[#FCF8F2] text-slate-800`}
       >
-        <EventsProvider>
-          <VolunteerProgressProvider>{children}</VolunteerProgressProvider>
-        </EventsProvider>
+        <AuthProvider>
+          <EventsProvider>
+            <VolunteerProgressProvider>{children}</VolunteerProgressProvider>
+          </EventsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

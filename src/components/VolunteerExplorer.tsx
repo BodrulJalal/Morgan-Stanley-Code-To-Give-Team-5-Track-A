@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
+import { useAuth } from "@/context/AuthContext";
 import { useVolunteerProgress } from "@/context/VolunteerProgressContext";
 import { VolunteerMap } from "./VolunteerMap";
 import { VolunteerLeaderboard } from "./VolunteerLeaderboard";
@@ -11,9 +12,9 @@ import { downloadAreaFlyer } from "@/lib/downloadFlyer";
 
 export function VolunteerExplorer() {
   const { events, loading, error, refetch, toggleJoin } = useEvents();
+  const { user, logout } = useAuth();
   const { awardFlyerPosted, adjustEventJoin } = useVolunteerProgress();
-  // Placeholder until Supabase Auth is integrated; replace with session.user.id
-  const currentUserId = "00000000-0000-0000-0000-000000000001";
+  const currentUserId = user?.id ?? "00000000-0000-0000-0000-000000000001";
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [flyerLoading, setFlyerLoading] = useState(false);
@@ -155,7 +156,7 @@ export function VolunteerExplorer() {
             href="/admin"
             className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
           >
-            Admin Page (developmental, will be removed)
+            Admin
           </a>
           <a
             href="/organizer"
@@ -163,6 +164,22 @@ export function VolunteerExplorer() {
           >
             Create Event
           </a>
+          {user ? (
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Log out ({user.name.split(" ")[0]})
+            </button>
+          ) : (
+            <a
+              href="/login"
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Log in
+            </a>
+          )}
         </div>
       </header>
 
