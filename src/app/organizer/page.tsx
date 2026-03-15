@@ -163,9 +163,7 @@ export default function OrganizerPage() {
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
-            <span className="text-2xl" aria-hidden="true">
-              🍋
-            </span>
+            <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-7 w-7 object-contain" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
@@ -178,7 +176,7 @@ export default function OrganizerPage() {
         </div>
         <Link
           href="/hub"
-          className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
+          className="rounded-full bg-primary-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600"
         >
           Back to Explorer
         </Link>
@@ -207,7 +205,7 @@ export default function OrganizerPage() {
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 placeholder="e.g. Harlem Community Flyering"
-                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
               />
             </div>
             <div>
@@ -223,7 +221,7 @@ export default function OrganizerPage() {
                 value={form.address}
                 onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
                 placeholder="e.g. 14th Street – Union Square, New York, NY"
-                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
               />
               <p className="mt-1 text-[11px] text-slate-500">
                 We&apos;ll geocode this into coordinates using Mapbox.
@@ -256,7 +254,7 @@ export default function OrganizerPage() {
                       };
                     })
                   }
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
                 />
                 <p className="mt-1 text-[11px] text-slate-500">
                   Event start must be in the future.
@@ -281,7 +279,7 @@ export default function OrganizerPage() {
                       endDate: e.target.value,
                     }))
                   }
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
                 />
                 <p className="mt-1 text-[11px] text-slate-500">
                   End time must be after the start time.
@@ -301,7 +299,7 @@ export default function OrganizerPage() {
                 value={form.organization}
                 onChange={(e) => setForm((f) => ({ ...f, organization: e.target.value }))}
                 placeholder="e.g. Lincoln High Eco Club, Local Food Pantry"
-                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
               />
             </div>
             <div>
@@ -317,7 +315,7 @@ export default function OrganizerPage() {
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 placeholder="Tell volunteers what this flyering action is about, who you’re trying to reach, and any instructions."
                 rows={3}
-                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
               />
               <p className="mt-1 text-[11px] text-slate-500">
                 Description is required so volunteers know what to expect.
@@ -333,7 +331,7 @@ export default function OrganizerPage() {
                     setAcknowledged(e.target.checked);
                     setAcknowledgmentError(null);
                   }}
-                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-purple-600 focus:ring-2 focus:ring-purple-500/70 focus:ring-offset-0"
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-primary-500 focus:ring-2 focus:ring-primary-500/70 focus:ring-offset-0"
                 />
                 <span>
                   I acknowledge that I am responsible for printing and supplying all flyers and materials for this event.
@@ -355,7 +353,7 @@ export default function OrganizerPage() {
             <button
               type="submit"
               disabled={isSubmitting || !acknowledged}
-              className="mt-2 w-full rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-amber-50"
+              className="mt-2 w-full rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-amber-50"
             >
               {isSubmitting ? "Creating event…" : "Submit Event"}
             </button>

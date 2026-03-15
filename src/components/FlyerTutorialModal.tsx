@@ -37,7 +37,7 @@ export function FlyerTutorialModal({
             type="button"
             onClick={onContinue}
             disabled={isDownloading}
-            className="rounded-full bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isDownloading ? "Downloading..." : "Continue to Download Flyer"}
           </button>
@@ -46,7 +46,7 @@ export function FlyerTutorialModal({
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)]">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-600">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-500">
             Before you post
           </p>
           <h3 className="mt-2 text-2xl font-black leading-tight text-slate-900">

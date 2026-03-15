@@ -31,7 +31,7 @@ export default function LoginPage() {
       {/* Background decoration */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-yellow-300/20 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-purple-200/25 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-primary-200/25 blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
@@ -39,7 +39,7 @@ export default function LoginPage() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-400 shadow-md">
-              <span className="text-xl" aria-hidden="true">🍋</span>
+              <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-6 w-6 object-contain" />
             </div>
             <span className="text-xl font-extrabold tracking-tight text-slate-800">Lemontree</span>
           </Link>
@@ -67,7 +67,7 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/30"
               />
             </div>
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="text-xs text-purple-600 hover:text-purple-700"
+                  className="text-xs text-primary-500 hover:text-primary-600"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 transition-colors focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/30"
               />
             </div>
 
@@ -111,7 +111,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 w-full rounded-xl bg-purple-600 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-purple-700 hover:shadow-purple-200 hover:shadow-lg disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="mt-1 w-full rounded-xl bg-primary-500 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-primary-600 hover:shadow-primary-200 hover:shadow-lg disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -133,7 +133,7 @@ export default function LoginPage() {
             {/* Guest */}
             <Link
               href="/hub"
-              className="block w-full rounded-xl border border-slate-200 py-3 text-center text-sm font-semibold text-slate-600 transition-colors hover:border-purple-300 hover:bg-purple-50/60 hover:text-purple-700"
+              className="block w-full rounded-xl border border-slate-200 py-3 text-center text-sm font-semibold text-slate-600 transition-colors hover:border-primary-300 hover:bg-primary-50/60 hover:text-primary-600"
             >
               Continue as guest
             </Link>
@@ -143,7 +143,7 @@ export default function LoginPage() {
         {/* Footer link */}
         <p className="mt-6 text-center text-sm text-slate-500">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="font-semibold text-purple-600 hover:text-purple-700">
+          <Link href="/signup" className="font-semibold text-primary-500 hover:text-primary-600">
             Sign up free
           </Link>
         </p>

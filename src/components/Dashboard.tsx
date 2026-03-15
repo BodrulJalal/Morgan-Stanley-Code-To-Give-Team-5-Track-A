@@ -45,9 +45,7 @@ export function Dashboard() {
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
-            <span className="text-2xl" aria-hidden="true">
-              🍋
-            </span>
+            <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-7 w-7 object-contain" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
@@ -58,7 +56,7 @@ export function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="hidden items-center gap-2 rounded-full bg-purple-700 px-4 py-1.5 text-xs font-medium text-white shadow-md md:flex">
+        <div className="hidden items-center gap-2 rounded-full bg-primary-500 px-4 py-1.5 text-xs font-medium text-white shadow-md md:flex">
           <span className="inline-flex h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
           Live NYC pilot
         </div>

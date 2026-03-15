@@ -37,7 +37,7 @@ type Tab = "chat" | "photos";
 
 const AVATAR_COLORS = [
   "bg-yellow-300 text-yellow-900",
-  "bg-purple-100 text-purple-800",
+  "bg-primary-100 text-primary-800",
   "bg-emerald-100 text-emerald-800",
   "bg-blue-100 text-blue-800",
   "bg-pink-100 text-pink-800",
@@ -801,7 +801,7 @@ export default function MessagesPage() {
         </span>
         <Link
           href="/hub"
-          className="rounded-full bg-purple-600 hover:bg-purple-700 transition-colors px-4 py-1.5 text-[12px] font-medium text-white"
+          className="rounded-full bg-primary-500 hover:bg-primary-600 transition-colors px-4 py-1.5 text-[12px] font-medium text-white"
         >
           ← Back to Explorer
         </Link>

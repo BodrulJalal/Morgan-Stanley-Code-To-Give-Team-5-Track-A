@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <header className="flex items-center justify-between bg-yellow-400 px-5 py-3 shrink-0 border-b border-yellow-300 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-yellow-300 shadow-sm">
-            <span className="text-lg" aria-hidden="true">🍋</span>
+            <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-5 w-5 object-contain" />
           </div>
           <div>
             <h1 className="text-base font-extrabold tracking-tight text-slate-800 leading-tight">
@@ -71,7 +71,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
         <Link
           href="/hub"
-          className="rounded-full bg-purple-600 px-4 py-1.5 text-[12px] font-medium text-white hover:bg-purple-700 transition-colors"
+          className="rounded-full bg-primary-500 px-4 py-1.5 text-[12px] font-medium text-white hover:bg-primary-600 transition-colors"
         >
           ← Back to Explorer
         </Link>
