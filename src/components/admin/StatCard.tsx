@@ -16,7 +16,7 @@ export function StatCard({
   color = "var(--mantine-color-gray-9)",
 }: StatCardProps) {
   return (
-    <Card radius="lg" padding="md" bg="yellow.0" withBorder>
+    <Card radius="lg" padding="md" bg="transparent">
       <Stack gap={2}>
         <Text fz="xs" fw={600} tt="uppercase" c="dimmed">
           {label}

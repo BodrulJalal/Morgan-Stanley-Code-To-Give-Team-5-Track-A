@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { AdminEngagementMetrics } from "@/types/adminDashboard";
+import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
 
 type WeeklyEngagementTrendSectionProps = {
   metrics: AdminEngagementMetrics;

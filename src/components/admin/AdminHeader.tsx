@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ActionIcon, Button, Group, Paper, Stack, Text, Title } from "@mantine/core";
+import { Button, Group, Paper, Stack, Text, Title } from "@mantine/core";
 
 type AdminHeaderProps = {
   title: string;
@@ -27,21 +27,14 @@ export function AdminHeader({
       radius={0}
     >
       <Group justify="space-between" wrap="wrap">
-        <Group gap="md">
-          <ActionIcon size={40} radius="lg" variant="filled" color="yellow.3">
-            <Text fz="xl" aria-hidden="true">
-              🍋
-            </Text>
-          </ActionIcon>
-          <Stack gap={0}>
-            <Title order={3} c="gray.9">
-              {title}
-            </Title>
-            <Text fz="xs" fw={600} tt="uppercase" c="gray.8">
-              {subtitle}
-            </Text>
-          </Stack>
-        </Group>
+        <Stack gap={0}>
+          <Title order={3} c="gray.9">
+            {title}
+          </Title>
+          <Text fz="xs" fw={600} tt="uppercase" c="gray.8">
+            {subtitle}
+          </Text>
+        </Stack>
         <Button
           component={Link}
           href={backHref}

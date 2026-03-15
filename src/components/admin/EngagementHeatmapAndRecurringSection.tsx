@@ -1,17 +1,52 @@
 "use client";
 
 import { Box, Card, Grid, Text, Title } from "@mantine/core";
+import { Fragment } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { PIE_COLORS } from "@/components/admin/engagementMetrics";
-import type { AdminEngagementMetrics } from "@/types/adminDashboard";
+import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
 
 type EngagementHeatmapAndRecurringSectionProps = {
   metrics: AdminEngagementMetrics;
 };
 
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function startOfDay(d: Date): Date {
+  const next = new Date(d);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function startOfWeek(d: Date): Date {
+  const next = startOfDay(d);
+  next.setDate(next.getDate() - next.getDay());
+  return next;
+}
+
 export function EngagementHeatmapAndRecurringSection({
   metrics,
 }: EngagementHeatmapAndRecurringSectionProps) {
+  const allEvents = [...metrics.pastEvents, ...metrics.upcomingEvents];
+  const attendanceByDate = new Map<string, number>();
+  for (const event of allEvents) {
+    const key = isoDate(new Date(event.start_time));
+    attendanceByDate.set(key, (attendanceByDate.get(key) ?? 0) + (event.attendees?.length ?? 0));
+  }
+
+  const today = startOfDay(new Date());
+  const firstDate = startOfWeek(new Date(today.getFullYear(), today.getMonth() - 4, 1));
+  const dayCount = Math.floor((today.getTime() - firstDate.getTime()) / 86400000) + 1;
+  const weekCount = Math.ceil(dayCount / 7);
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  let maxDailyAttendance = 1;
+  for (const value of attendanceByDate.values()) {
+    maxDailyAttendance = Math.max(maxDailyAttendance, value);
+  }
+
   return (
     <Grid component="section" gutter="lg">
       <Grid.Col span={{ base: 12, lg: 6 }}>
@@ -20,42 +55,66 @@ export function EngagementHeatmapAndRecurringSection({
             Engagement Heatmap
           </Title>
           <Text mt={4} fz="sm" c="dimmed">
-            Attendance concentration by day of week and time block.
+            Calendar view of event attendance intensity over time.
           </Text>
           <Box mt="md" style={{ overflowX: "auto" }}>
-            <Box miw={520}>
-              <div className="mb-2 grid grid-cols-8 gap-2 text-[11px] font-medium text-slate-500">
-                <span />
-                {metrics.heatDays.map((day) => (
-                  <span key={day} className="text-center">
-                    {day}
-                  </span>
-                ))}
-              </div>
-              <div className="space-y-2">
-                {metrics.heatRows.map((row) => (
-                  <div key={row} className="grid grid-cols-8 items-center gap-2">
-                    <span className="text-[11px] font-medium text-slate-500">{row}</span>
-                    {metrics.heatDays.map((day) => {
-                      const value =
-                        metrics.heatmapData.find(
-                          (cell) => cell.day === day && cell.hourBucket === row
-                        )?.value ?? 0;
-                      const alpha = Math.max(0.12, value / metrics.maxHeatValue);
+            <Box miw={640}>
+              <Box
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `auto repeat(${weekCount}, 18px)`,
+                  gap: 4,
+                  alignItems: "center",
+                }}
+              >
+                <Box />
+                {Array.from({ length: weekCount }).map((_, weekIdx) => {
+                  const date = new Date(firstDate);
+                  date.setDate(date.getDate() + weekIdx * 7);
+                  return (
+                    <Text key={`wk-${weekIdx}`} fz={9} c="dimmed" ta="center">
+                      {weekIdx % 4 === 0 ? `${date.getMonth() + 1}/${date.getDate()}` : ""}
+                    </Text>
+                  );
+                })}
+
+                {dayLabels.map((label, dayIdx) => (
+                  <Fragment key={`row-${label}`}>
+                    <Text fz={10} c="dimmed">
+                      {label}
+                    </Text>
+                    {Array.from({ length: weekCount }).map((_, weekIdx) => {
+                      const date = new Date(firstDate);
+                      date.setDate(date.getDate() + weekIdx * 7 + dayIdx);
+                      const future = date > today;
+                      const key = isoDate(date);
+                      const value = attendanceByDate.get(key) ?? 0;
+                      const alpha = future ? 0 : Math.max(0.08, value / maxDailyAttendance);
+
                       return (
-                        <div
-                          key={`${day}-${row}`}
-                          title={`${day} ${row}: ${value} engagement`}
-                          className="h-8 rounded-md border border-slate-100"
-                          style={{ backgroundColor: `rgba(124, 58, 237, ${alpha})` }}
+                        <Box
+                          key={`${label}-${weekIdx}`}
+                          title={`${key}: ${value} attendees`}
+                          h={16}
+                          w={16}
+                          style={{
+                            borderRadius: 4,
+                            border: "1px solid var(--mantine-color-gray-2)",
+                            backgroundColor: future
+                              ? "var(--mantine-color-gray-1)"
+                              : `rgba(124, 58, 237, ${alpha})`,
+                          }}
                         />
                       );
                     })}
-                  </div>
+                  </Fragment>
                 ))}
-              </div>
+              </Box>
             </Box>
           </Box>
+          <Text mt="sm" fz="xs" c="dimmed">
+            Darker cells indicate higher attendance; lighter cells indicate lower engagement.
+          </Text>
         </Card>
       </Grid.Col>
 

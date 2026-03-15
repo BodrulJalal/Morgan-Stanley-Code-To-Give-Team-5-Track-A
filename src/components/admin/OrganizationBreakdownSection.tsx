@@ -15,7 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import { PIE_COLORS } from "@/components/admin/engagementMetrics";
-import type { AdminEngagementMetrics } from "@/types/adminDashboard";
+import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
 
 type OrganizationBreakdownSectionProps = {
   metrics: AdminEngagementMetrics;

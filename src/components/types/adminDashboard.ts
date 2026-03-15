@@ -59,3 +59,25 @@ export type AdminEngagementMetrics = {
   heatmapData: HeatmapCell[];
   maxHeatValue: number;
 };
+
+export type VolunteerContact = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  neighborhood: string;
+  totalEventsAttended: number;
+  lastAttendedDate: string;
+  status: "active" | "warm" | "inactive";
+};
+
+export type WeeklyReportSummary = {
+  weekLabel: string;
+  weekStartIso: string;
+  weekEndIso: string;
+  totalAttendance: number;
+  uniqueVolunteers: number;
+  totalEvents: number;
+  recurringSharePct: number;
+  topOrganization: string;
+};
