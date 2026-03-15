@@ -147,6 +147,12 @@ export function VolunteerExplorer() {
             Admin Page (developmental, will be removed)
           </a>
           <a
+            href="/messages"
+            className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
+          >
+            Messages
+          </a>
+          <a
             href="/organizer"
             className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
           >
