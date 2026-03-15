@@ -56,6 +56,9 @@ const ORGANIZERS = [
   "Queens Community Kitchen",
   "City Relief Network",
   "Brooklyn Hunger Helpers",
+  "East River Community Aid",
+  "Uptown Neighbors Collective",
+  "Sunset Outreach Partners",
 ];
 const CITIES = ["New York", "Bronx", "Queens", "Brooklyn"];
 const STREETS = [
@@ -68,6 +71,7 @@ const STREETS = [
   "Bedford Ave",
   "Parsons Blvd",
 ];
+const PEAK_HOURS = [10, 11, 12, 14, 15, 16, 17, 18, 18, 19, 19, 20];
 
 const recurringPool = Array.from({ length: RECURRING_VOLUNTEERS }, (_, i) =>
   `u_${String(i + 1).padStart(3, "0")}`
@@ -86,17 +90,38 @@ function rotatingRecurring(start: number, count: number): string[] {
 function generatedEventMeta(index: number) {
   const city = CITIES[index % CITIES.length];
   const street = STREETS[index % STREETS.length];
-  const organizer = ORGANIZERS[index % ORGANIZERS.length];
+  // Intentionally weighted organizer distribution for more realistic variance.
+  const organizerPattern = [0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7];
+  const organizer = ORGANIZERS[organizerPattern[index % organizerPattern.length]];
   const title = `${city} Outreach Wave #${index + 1}`;
   const address = `${100 + (index % 900)} ${street}`;
   return { city, street, organizer, title, address };
 }
 
+function pastEventDayOffset(index: number): number {
+  const remaining = PAST_EVENT_COUNT - index;
+  const cadenceJitter = (index % 7) - (index % 3);
+  return -(Math.floor(remaining * 1.85 + cadenceJitter) + 2);
+}
+
+function upcomingEventDayOffset(index: number): number {
+  const weekPhase = [2, 3, 5, 6, 8, 9, 11][index % 7];
+  return weekPhase + Math.floor(index / 7) * 7;
+}
+
+function eventStartHour(index: number): number {
+  return PEAK_HOURS[(index * 5 + Math.floor(index / 9)) % PEAK_HOURS.length];
+}
+
 const pastEvents = Array.from({ length: PAST_EVENT_COUNT }, (_, i) => {
   const meta = generatedEventMeta(i);
-  const attendees = rotatingRecurring(i * 5, 18);
-  if (i < oneTimePool.length) {
+  const baseAttendance = 9 + (i % 15); // 9..23 recurring attendees
+  const attendees = rotatingRecurring(i * 5, baseAttendance);
+  if (i < oneTimePool.length && i % 3 !== 0) {
     attendees.push(oneTimePool[i]);
+  }
+  if (i % 17 === 0 && i + 1 < oneTimePool.length) {
+    attendees.push(oneTimePool[(i + 1) % oneTimePool.length]);
   }
   return makeEvent(
     `evt_past_${String(i + 1).padStart(4, "0")}`,
@@ -105,45 +130,78 @@ const pastEvents = Array.from({ length: PAST_EVENT_COUNT }, (_, i) => {
     meta.city,
     meta.organizer,
     attendees,
-    -((PAST_EVENT_COUNT - i) * 2),
-    8 + (i % 10)
+    pastEventDayOffset(i),
+    eventStartHour(i)
   );
 });
 
 const upcomingEvents = Array.from({ length: UPCOMING_EVENT_COUNT }, (_, i) => {
   const meta = generatedEventMeta(PAST_EVENT_COUNT + i);
+  const plannedAttendance = 8 + ((i * 3) % 12); // 8..19
   return makeEvent(
     `evt_upcoming_${String(i + 1).padStart(3, "0")}`,
     meta.title,
     meta.address,
     meta.city,
     meta.organizer,
-    rotatingRecurring((PAST_EVENT_COUNT + i) * 7, 16),
-    (i + 1) * 2,
-    9 + (i % 8)
+    rotatingRecurring((PAST_EVENT_COUNT + i) * 7, plannedAttendance),
+    upcomingEventDayOffset(i),
+    eventStartHour(PAST_EVENT_COUNT + i)
   );
 });
 
 export const mockEvents: FlyeringEvent[] = [...pastEvents, ...upcomingEvents];
 
+export const mockAdminMetrics = deriveAdminEngagementMetrics(mockEvents);
+const projectedTotalResources = Math.max(
+  2500,
+  Math.round(mockAdminMetrics.uniqueVolunteersCount * 7.5)
+);
+const projectedPantries = Math.round(projectedTotalResources * 0.69);
+const projectedKitchens = Math.round(projectedTotalResources * 0.22);
+const projectedOpenToday = Math.round(projectedTotalResources * 0.28);
+const projectedOpenThisWeek = Math.round(projectedTotalResources * 0.49);
+
 export const mockResourceStats: ResourceStats = {
-  total: 2400,
-  pantries: 1700,
-  kitchens: 520,
-  openToday: 640,
-  openThisWeek: 1105,
+  total: projectedTotalResources,
+  pantries: projectedPantries,
+  kitchens: projectedKitchens,
+  openToday: projectedOpenToday,
+  openThisWeek: projectedOpenThisWeek,
 };
 
-export const mockAdminMetrics = deriveAdminEngagementMetrics(mockEvents);
 export const mockCoverageRatio = (
-  (mockEvents.length / mockResourceStats.total) *
-  100
-).toFixed(2);
+  mockResourceStats.total && mockResourceStats.total > 0
+    ? (mockEvents.length / mockResourceStats.total) * 100
+    : null
+)?.toFixed(2) ?? null;
 
 function statusFromDaysAgo(daysAgo: number): VolunteerContact["status"] {
   if (daysAgo <= 21) return "active";
   if (daysAgo <= 56) return "warm";
   return "inactive";
+}
+
+function syntheticLastAttendedDate(index: number, fallbackIso: string): string {
+  // Deterministic spread for mock CRM states: active (60%), warm (25%), inactive (15%).
+  const tier = index % 20;
+  const now = new Date();
+  const shifted = new Date(now);
+
+  if (tier < 12) {
+    shifted.setDate(now.getDate() - (tier % 14));
+    return shifted.toISOString();
+  }
+  if (tier < 17) {
+    shifted.setDate(now.getDate() - (28 + (tier % 21)));
+    return shifted.toISOString();
+  }
+  if (tier < 20) {
+    shifted.setDate(now.getDate() - (70 + (tier % 40)));
+    return shifted.toISOString();
+  }
+
+  return fallbackIso;
 }
 
 function contactNameForUser(userId: string): string {
@@ -180,6 +238,9 @@ export const mockContacts: VolunteerContact[] = (() => {
   const lastAttended = new Map<string, string>();
 
   for (const event of mockEvents) {
+    if (new Date(event.start_time) > new Date()) {
+      continue;
+    }
     for (const userId of event.attendees) {
       attendanceCount.set(userId, (attendanceCount.get(userId) ?? 0) + 1);
       const existing = lastAttended.get(userId);
@@ -191,7 +252,8 @@ export const mockContacts: VolunteerContact[] = (() => {
 
   return [...attendanceCount.entries()]
     .map(([id, totalEventsAttended], idx) => {
-      const lastDate = lastAttended.get(id) ?? new Date().toISOString();
+      const derivedLastDate = lastAttended.get(id) ?? new Date().toISOString();
+      const lastDate = syntheticLastAttendedDate(idx, derivedLastDate);
       const daysAgo = Math.floor((Date.now() - new Date(lastDate).getTime()) / 86400000);
       return {
         id,

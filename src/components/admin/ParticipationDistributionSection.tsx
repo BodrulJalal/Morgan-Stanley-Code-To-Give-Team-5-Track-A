@@ -15,14 +15,19 @@ import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
 
 type ParticipationDistributionSectionProps = {
   metrics: AdminEngagementMetrics;
+  showHistogram?: boolean;
+  showFirstTimeReturning?: boolean;
 };
 
 export function ParticipationDistributionSection({
   metrics,
+  showHistogram = true,
+  showFirstTimeReturning = true,
 }: ParticipationDistributionSectionProps) {
   return (
     <Grid component="section" gutter="lg">
-      <Grid.Col span={{ base: 12, lg: 6 }}>
+      {showHistogram ? (
+        <Grid.Col span={{ base: 12, lg: showFirstTimeReturning ? 6 : 12 }}>
         <Card radius="xl" withBorder shadow="sm" p="lg">
           <Title order={5} fz="xs" tt="uppercase" c="dimmed">
             Volunteer Frequency Histogram
@@ -48,9 +53,11 @@ export function ParticipationDistributionSection({
             </Box>
           )}
         </Card>
-      </Grid.Col>
+        </Grid.Col>
+      ) : null}
 
-      <Grid.Col span={{ base: 12, lg: 6 }}>
+      {showFirstTimeReturning ? (
+        <Grid.Col span={{ base: 12, lg: showHistogram ? 6 : 12 }}>
         <Card radius="xl" withBorder shadow="sm" p="lg">
           <Title order={5} fz="xs" tt="uppercase" c="dimmed">
             First-time vs Returning Trend
@@ -78,7 +85,8 @@ export function ParticipationDistributionSection({
             </Box>
           )}
         </Card>
-      </Grid.Col>
+        </Grid.Col>
+      ) : null}
     </Grid>
   );
 }

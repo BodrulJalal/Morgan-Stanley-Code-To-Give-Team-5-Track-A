@@ -8,6 +8,8 @@ import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
 
 type EngagementHeatmapAndRecurringSectionProps = {
   metrics: AdminEngagementMetrics;
+  showHeatmap?: boolean;
+  showRecurring?: boolean;
 };
 
 function isoDate(d: Date): string {
@@ -28,6 +30,8 @@ function startOfWeek(d: Date): Date {
 
 export function EngagementHeatmapAndRecurringSection({
   metrics,
+  showHeatmap = true,
+  showRecurring = true,
 }: EngagementHeatmapAndRecurringSectionProps) {
   const allEvents = [...metrics.pastEvents, ...metrics.upcomingEvents];
   const attendanceByDate = new Map<string, number>();
@@ -49,7 +53,8 @@ export function EngagementHeatmapAndRecurringSection({
 
   return (
     <Grid component="section" gutter="lg">
-      <Grid.Col span={{ base: 12, lg: 6 }}>
+      {showHeatmap ? (
+        <Grid.Col span={{ base: 12, lg: showRecurring ? 6 : 12 }}>
         <Card radius="xl" withBorder shadow="sm" p="lg">
           <Title order={5} fz="xs" tt="uppercase" c="dimmed">
             Engagement Heatmap
@@ -116,9 +121,11 @@ export function EngagementHeatmapAndRecurringSection({
             Darker cells indicate higher attendance; lighter cells indicate lower engagement.
           </Text>
         </Card>
-      </Grid.Col>
+        </Grid.Col>
+      ) : null}
 
-      <Grid.Col span={{ base: 12, lg: 6 }}>
+      {showRecurring ? (
+        <Grid.Col span={{ base: 12, lg: showHeatmap ? 6 : 12 }}>
         <Card radius="xl" withBorder shadow="sm" p="lg">
           <Title order={5} fz="xs" tt="uppercase" c="dimmed">
             Recurring vs One-time Participation
@@ -153,7 +160,8 @@ export function EngagementHeatmapAndRecurringSection({
             </Box>
           )}
         </Card>
-      </Grid.Col>
+        </Grid.Col>
+      ) : null}
     </Grid>
   );
 }

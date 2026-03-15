@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { useEvents } from "@/context/EventsContext";
 
 type ResourceStats = {
-  total: number;
-  pantries: number;
-  kitchens: number;
-  openToday: number;
-  openThisWeek: number;
+  total?: number;
+  pantries?: number;
+  kitchens?: number;
+  openToday?: number;
+  openThisWeek?: number;
 };
 
 type Message = {
@@ -26,9 +26,20 @@ function buildContext(
   const totalAttendees = events.reduce((sum, e) => sum + e.attendees.length, 0);
   const avgAttendees = events.length > 0 ? (totalAttendees / events.length).toFixed(1) : "0";
   const coverageRatio =
-    stats && stats.total > 0
+    stats?.total != null && stats.total > 0
       ? ((events.length / stats.total) * 100).toFixed(2)
       : null;
+
+  const resourceParts =
+    stats == null
+      ? []
+      : [
+          stats.total != null ? `${stats.total.toLocaleString()} total` : null,
+          stats.pantries != null ? `${stats.pantries.toLocaleString()} food pantries` : null,
+          stats.kitchens != null ? `${stats.kitchens.toLocaleString()} soup kitchens` : null,
+          stats.openToday != null ? `${stats.openToday} open today` : null,
+          stats.openThisWeek != null ? `${stats.openThisWeek} open this week` : null,
+        ].filter((part): part is string => part != null);
 
   const eventSummaries = events
     .slice(0, 20)
@@ -44,8 +55,8 @@ function buildContext(
     coverageRatio
       ? `Network coverage: ${coverageRatio}% (${events.length} events / ${stats!.total} total resources)`
       : "Network coverage: unavailable",
-    stats
-      ? `Resource network: ${stats.total.toLocaleString()} total | ${stats.pantries.toLocaleString()} food pantries | ${stats.kitchens.toLocaleString()} soup kitchens | ${stats.openToday} open today | ${stats.openThisWeek} open this week`
+    resourceParts.length > 0
+      ? `Resource network: ${resourceParts.join(" | ")}`
       : "Resource network stats: unavailable",
     events.length > 0 ? `\nEvent breakdown:\n${eventSummaries}` : "",
   ]

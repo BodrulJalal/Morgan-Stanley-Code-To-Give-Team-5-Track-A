@@ -1,11 +1,11 @@
 import type { FlyeringEvent } from "@/types/events";
 
 export type ResourceStats = {
-  total: number;
-  pantries: number;
-  kitchens: number;
-  openToday: number;
-  openThisWeek: number;
+  total?: number;
+  pantries?: number;
+  kitchens?: number;
+  openToday?: number;
+  openThisWeek?: number;
 };
 
 export type WeeklyBucket = {

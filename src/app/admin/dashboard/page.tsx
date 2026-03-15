@@ -2,11 +2,8 @@
 
 import { Container, Stack, Text, Title } from "@mantine/core";
 import { ZestyAdminAssistant } from "@/components/ZestyAdminAssistant";
-import { EngagementHeatmapAndRecurringSection } from "@/components/admin/EngagementHeatmapAndRecurringSection";
-import { OrganizationBreakdownSection } from "@/components/admin/OrganizationBreakdownSection";
 import { ResourceNetworkSection } from "@/components/admin/ResourceNetworkSection";
 import { VolunteerEngagementKpisSection } from "@/components/admin/VolunteerEngagementKpisSection";
-import { WeeklyEngagementTrendSection } from "@/components/admin/WeeklyEngagementTrendSection";
 import {
   mockAdminMetrics,
   mockCoverageRatio,
@@ -22,14 +19,11 @@ export default function AdminDashboardPage() {
           <div>
             <Title order={2}>Dashboard</Title>
             <Text c="dimmed" fz="sm">
-              Overview of volunteer engagement, event momentum, and organization participation.
+              Overview of volunteer engagement and network status. Use See details for category
+              analytics.
             </Text>
           </div>
 
-          <VolunteerEngagementKpisSection metrics={mockAdminMetrics} />
-          <WeeklyEngagementTrendSection metrics={mockAdminMetrics} />
-          <EngagementHeatmapAndRecurringSection metrics={mockAdminMetrics} />
-          <OrganizationBreakdownSection metrics={mockAdminMetrics} />
           <ResourceNetworkSection
             eventsCount={mockEvents.length}
             coverageRatio={mockCoverageRatio}
@@ -37,6 +31,7 @@ export default function AdminDashboardPage() {
             error={null}
             stats={mockResourceStats}
           />
+          <VolunteerEngagementKpisSection metrics={mockAdminMetrics} />
         </Stack>
       </Container>
       <ZestyAdminAssistant resourceStats={mockResourceStats} />

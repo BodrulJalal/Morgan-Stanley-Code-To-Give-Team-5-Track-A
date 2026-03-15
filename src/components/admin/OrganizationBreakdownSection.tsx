@@ -54,7 +54,7 @@ export function OrganizationBreakdownSection({
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
                 </PieChart>
               </ResponsiveContainer>
             </Box>
