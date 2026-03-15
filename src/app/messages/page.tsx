@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useEvents } from "@/context/EventsContext";
 import { useAuth } from "@/context/AuthContext";
 import type { FlyeringEvent } from "@/types/events";
@@ -56,7 +56,7 @@ const POLL_INTERVAL_MS = 4000;
 function mapApiMessageToMessage(
   row: ApiChatMessageRow | SendChatMessageResponse,
   currentUserId: string | null,
-  currentUserDisplayName?: string | null
+  currentUserDisplayName?: string | null,
 ): Message {
   const isYou = currentUserId !== null && row.user_id === currentUserId;
   const senderName = isYou
@@ -172,8 +172,7 @@ function formatMessageTime(date: Date): string {
 function formatEventDateRange(startIso: string, endIso: string): string {
   const start = new Date(startIso);
   const end = new Date(endIso);
-  const sameDay =
-    start.toDateString() === end.toDateString();
+  const sameDay = start.toDateString() === end.toDateString();
 
   const datePart = start.toLocaleDateString([], {
     weekday: "short",
@@ -258,13 +257,13 @@ function MembersSidebar({ eventId }: { eventId: string }) {
           id: attendeeId === currentUserId ? "you" : attendeeId,
           name:
             attendeeId === currentUserId
-              ? user?.name ?? "You"
-              : displayNames[attendeeId] ?? "…",
+              ? (user?.name ?? "You")
+              : (displayNames[attendeeId] ?? "…"),
           role:
             attendeeId === event.created_by_user_id ? "organizer" : "volunteer",
           online: attendeeId === currentUserId,
         }))
-      : MOCK_MEMBERS[eventId] ?? [];
+      : (MOCK_MEMBERS[eventId] ?? []);
 
   const online = members.filter((m) => m.online);
   const offline = members.filter((m) => !m.online);
@@ -412,7 +411,8 @@ function EventDetailsBanner({ event }: { event: FlyeringEvent }) {
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3zm-.5 2v4l3 1.5.5-.87-2.5-1.25V5H7.5z" />
           </svg>
           <span className="text-[12px] font-medium text-yellow-800 truncate">
-            {formatEventDateRange(event.start_time, event.end_time)} · {event.address}
+            {formatEventDateRange(event.start_time, event.end_time)} ·{" "}
+            {event.address}
           </span>
         </div>
         <svg
@@ -459,39 +459,63 @@ function EventDetailsBanner({ event }: { event: FlyeringEvent }) {
 
 // ─── MessageBubble ────────────────────────────────────────────────────────────
 
-function MessageBubble({ msg }: { msg: Message }) {
+const GROUP_WINDOW_MS = 60_000;
+
+function MessageBubble({
+  msg,
+  isGroupedWithPrevious,
+  isGroupedWithNext,
+}: {
+  msg: Message;
+  isGroupedWithPrevious: boolean;
+  isGroupedWithNext: boolean;
+}) {
   const isMe = msg.senderId === "you";
   const initial = msg.senderName.charAt(0).toUpperCase() || "?";
+  const avatarEl = (
+    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 bg-gray-200 text-gray-600">
+      {initial}
+    </div>
+  );
+  const yellowAvatarEl = (
+    <div className="w-7 h-7 rounded-full bg-yellow-300 flex items-center justify-center text-[10px] font-bold text-yellow-900 shrink-0">
+      {initial}
+    </div>
+  );
+  const avatarSpacer = <div className="w-7 h-7 shrink-0" aria-hidden="true" />;
+  const bubbleRadiusClasses = isMe
+    ? `rounded-2xl rounded-br-sm ${isGroupedWithPrevious ? "rounded-tr-sm" : ""}`
+    : `rounded-2xl rounded-bl-sm ${isGroupedWithPrevious ? "rounded-tl-sm" : ""}`;
+
   return (
-    <div className={`flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : ""}`}>
-      {!isMe && (
-        <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-600 shrink-0">
-          {initial}
-        </div>
-      )}
+    <div
+      className={`flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : ""} ${isGroupedWithPrevious ? "mt-[2px]" : "mt-4"}`}
+    >
+      {!isMe &&
+        (isGroupedWithNext ? avatarSpacer : avatarEl)}
       <div
         className={`max-w-[65%] flex flex-col ${isMe ? "items-end" : "items-start"}`}
       >
-        <span
-          className={`text-[11px] text-gray-400 font-medium mb-1 ${isMe ? "mr-1" : "ml-1"}`}
-        >
-          {msg.senderName}
-        </span>
+        {!isGroupedWithPrevious && (
+          <span
+            className={`text-[11px] text-gray-400 font-medium mb-1 ${isMe ? "mr-1" : "ml-1"}`}
+          >
+            {msg.senderName}
+          </span>
+        )}
         <div
-          className={`px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed
-          ${isMe ? "bg-gray-900 text-white rounded-br-sm" : "bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm"}`}
+          className={`px-3.5 py-2.5 text-[13px] leading-relaxed ${bubbleRadiusClasses}
+          ${isMe ? "bg-gray-900 text-white" : "bg-white border border-gray-100 text-gray-800 shadow-sm"}`}
         >
           {msg.text}
         </div>
-        <span className="text-[10px] text-gray-400 mt-1 mx-1 font-mono">
-          {formatMessageTime(msg.timestamp)}
-        </span>
+        {!isGroupedWithNext && (
+          <span className="text-[10px] text-gray-400 mt-1 mx-1 font-mono">
+            {formatMessageTime(msg.timestamp)}
+          </span>
+        )}
       </div>
-      {isMe && (
-        <div className="w-7 h-7 rounded-full bg-yellow-300 flex items-center justify-center text-[10px] font-bold text-yellow-900 shrink-0">
-          {initial}
-        </div>
-      )}
+      {isMe && (isGroupedWithNext ? avatarSpacer : yellowAvatarEl)}
     </div>
   );
 }
@@ -690,13 +714,19 @@ export default function MessagesPage() {
 
   const activeEvent = events.find((e) => e.id === activeEventId) ?? null;
   const activeMessages = activeEventId ? (messages[activeEventId] ?? []) : [];
+  const sortedMessages = useMemo(
+    () =>
+      [...activeMessages].sort(
+        (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+      ),
+    [activeMessages],
+  );
   const activePhotos = activeEventId ? (photos[activeEventId] ?? []) : [];
   const activeMembers: Member[] =
     activeEvent && activeEvent.attendees.length > 0
       ? activeEvent.attendees.map((attendeeId) => ({
           id: attendeeId === currentUserId ? "you" : attendeeId,
-          name:
-            attendeeId === currentUserId ? (user?.name ?? "You") : "…",
+          name: attendeeId === currentUserId ? (user?.name ?? "You") : "…",
           role:
             attendeeId === activeEvent.created_by_user_id
               ? "organizer"
@@ -735,7 +765,7 @@ export default function MessagesPage() {
       try {
         const { messages: raw } = await getChatMessages(roomId);
         const list = raw.map((row) =>
-          mapApiMessageToMessage(row, currentUserId, user?.name)
+          mapApiMessageToMessage(row, currentUserId, user?.name),
         );
         setMessages((prev) => ({ ...prev, [roomId]: list }));
       } catch {
@@ -744,7 +774,7 @@ export default function MessagesPage() {
         setMessagesLoading(false);
       }
     },
-    [currentUserId, user?.name]
+    [currentUserId, user?.name],
   );
 
   useEffect(() => {
@@ -810,7 +840,7 @@ export default function MessagesPage() {
       setMessages((prev) => ({
         ...prev,
         [roomId]: (prev[roomId] ?? []).map((m) =>
-          m.id === tempId ? mapped : m
+          m.id === tempId ? mapped : m,
         ),
       }));
     } catch {
@@ -842,7 +872,11 @@ export default function MessagesPage() {
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-7 w-7 object-contain" />
+            <img
+              src="/lemontree-logo.svg"
+              alt="Lemontree logo"
+              className="h-7 w-7 object-contain"
+            />
           </div>
           <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
             Event Messages
@@ -973,7 +1007,7 @@ export default function MessagesPage() {
               {/* Tab content */}
               {activeTab === "chat" ? (
                 <>
-                  <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-hide">
+                  <div className="flex-1 overflow-y-auto px-5 py-4 scrollbar-hide">
                     {!isAllowedToChat ? (
                       <div className="flex flex-col items-center justify-center gap-3 text-center pt-12 pb-6 px-4">
                         <p className="text-[15px] text-gray-700 leading-relaxed">
@@ -985,7 +1019,9 @@ export default function MessagesPage() {
                       <>
                         <div className="flex items-center gap-3 my-2">
                           <hr className="flex-1 border-gray-100" />
-                          <span className="text-[11px] text-gray-400">Today</span>
+                          <span className="text-[11px] text-gray-400">
+                            Today
+                          </span>
                           <hr className="flex-1 border-gray-100" />
                         </div>
                         {messagesLoading && activeMessages.length === 0 ? (
@@ -997,9 +1033,28 @@ export default function MessagesPage() {
                             No messages yet. Say hello!
                           </p>
                         ) : (
-                          activeMessages.map((msg) => (
-                            <MessageBubble key={msg.id} msg={msg} />
-                          ))
+                          sortedMessages.map((msg, index) => {
+                            const prev = sortedMessages[index - 1];
+                            const next = sortedMessages[index + 1];
+                            const isGroupedWithPrevious = !!(
+                              prev &&
+                              msg.senderId === prev.senderId &&
+                              msg.timestamp.getTime() - prev.timestamp.getTime() <= GROUP_WINDOW_MS
+                            );
+                            const isGroupedWithNext = !!(
+                              next &&
+                              msg.senderId === next.senderId &&
+                              next.timestamp.getTime() - msg.timestamp.getTime() <= GROUP_WINDOW_MS
+                            );
+                            return (
+                              <MessageBubble
+                                key={msg.id}
+                                msg={msg}
+                                isGroupedWithPrevious={isGroupedWithPrevious}
+                                isGroupedWithNext={isGroupedWithNext}
+                              />
+                            );
+                          })
                         )}
                       </>
                     )}

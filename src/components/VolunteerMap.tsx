@@ -124,7 +124,10 @@ export function VolunteerMap({
               anchor="center"
               onClick={(e) => handleMarkerClick(e, event)}
             >
-              <EventPin hasSpots={event.spotsRemaining > 0} isJoined={isJoined} />
+              <EventPin
+                hasSpots={event.spotsRemaining > 0}
+                isJoined={isJoined}
+              />
             </Marker>
           );
         })}
@@ -154,7 +157,9 @@ export function VolunteerMap({
                 timeStyle: "short",
               })}
             </p>
-            <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>
+            <p className="mt-1 text-[11px] text-slate-600">
+              {popupEvent.address}
+            </p>
             <p className="mt-1 line-clamp-3 text-[11px] text-slate-700">
               {popupEvent.description}
             </p>
