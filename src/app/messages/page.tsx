@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useEvents } from "@/context/EventsContext";
+import { useAuth } from "@/context/AuthContext";
 import type { FlyeringEvent } from "@/types/events";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -652,6 +653,8 @@ function PhotoGrid({
 
 export default function MessagesPage() {
   const { events, loading } = useEvents();
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("chat");
   const [membersSidebarOpen, setMembersSidebarOpen] = useState(false);
@@ -672,11 +675,30 @@ export default function MessagesPage() {
     : [];
   const onlineCount = activeMembers.filter((m) => m.online).length;
 
-  const filteredEvents = events.filter(
+  // Only include chat groups the current user has joined and that haven't ended
+  const now = new Date();
+  const joinedChatGroups = currentUserId
+    ? events.filter(
+        (e) =>
+          e.attendees.includes(currentUserId) &&
+          new Date(e.end_time ?? e.start_time) >= now,
+      )
+    : [];
+
+  const filteredEvents = joinedChatGroups.filter(
     (e) =>
       e.title.toLowerCase().includes(search.toLowerCase()) ||
       e.address.toLowerCase().includes(search.toLowerCase()),
   );
+
+  // If the active event is no longer in the joined list, clear the selection
+  useEffect(() => {
+    if (!activeEventId) return;
+    const stillJoined = joinedChatGroups.some((e) => e.id === activeEventId);
+    if (!stillJoined) {
+      setActiveEventId(null);
+    }
+  }, [activeEventId, joinedChatGroups]);
 
   useEffect(() => {
     if (activeTab === "chat")
@@ -733,7 +755,7 @@ export default function MessagesPage() {
           Lemon
         </span>
         <Link
-          href="/"
+          href="/hub"
           className="rounded-full bg-purple-600 hover:bg-purple-700 transition-colors px-4 py-1.5 text-[12px] font-medium text-white"
         >
           ← Back to Explorer
