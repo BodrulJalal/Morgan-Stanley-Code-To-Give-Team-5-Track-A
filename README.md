@@ -1,6 +1,6 @@
-# Lemontree Volunteer Flyering Hub
+# LemonLink Volunteer Flyering Hub
 
-Lemontree helps volunteers organize local flyering campaigns so more families can discover nearby food resources.  
+LemonLink helps volunteers organize local flyering campaigns so more families can discover nearby food resources.  
 The core challenge is making campaign coordination simple and scalable without requiring staff to manually run each event.
 
 Our solution is a web platform where volunteers can sign up, discover events on a map, join outreach campaigns, create new events, and download area-specific flyers.
