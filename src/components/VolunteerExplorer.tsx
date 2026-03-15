@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
 import { useAuth } from "@/context/AuthContext";
 import { useVolunteerProgress } from "@/context/VolunteerProgressContext";
@@ -27,7 +28,12 @@ export function VolunteerExplorer() {
   const [posterConfirmOpen, setPosterConfirmOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [showFullDetails, setShowFullDetails] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+  const avatarButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
 
   useEffect(() => {
     refetch();
@@ -71,6 +77,27 @@ export function VolunteerExplorer() {
     });
     return () => window.cancelAnimationFrame(rafId);
   }, [selectedEventId, filteredEvents.length]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const inAvatar = profileMenuRef.current?.contains(target);
+      const inDropdown = dropdownRef.current?.contains(target);
+      if (!inAvatar && !inDropdown) setIsProfileMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen || !avatarButtonRef.current) {
+      setDropdownPosition(null);
+      return;
+    }
+    const rect = avatarButtonRef.current.getBoundingClientRect();
+    setDropdownPosition({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+  }, [isProfileMenuOpen]);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((event) => event.id === selectedEventId) ?? null;
@@ -204,13 +231,54 @@ export function VolunteerExplorer() {
             Create Event
           </a>
           {user ? (
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
-            >
-              Log out ({user.name.split(" ")[0]})
-            </button>
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                ref={avatarButtonRef}
+                type="button"
+                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100/90 text-center font-bold leading-none text-slate-800 shadow-md ring-1 ring-amber-200/80 transition-colors hover:bg-amber-200/90 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-yellow-400"
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="true"
+                aria-label="Profile menu"
+              >
+                <span className="inline-flex items-center justify-center">{(user.name || "U").charAt(0).toUpperCase()}</span>
+              </button>
+              {typeof document !== "undefined" &&
+                isProfileMenuOpen &&
+                dropdownPosition &&
+                createPortal(
+                  <div
+                    ref={dropdownRef}
+                    role="menu"
+                    className="fixed z-[9999] w-56 rounded-xl border border-slate-100 bg-white py-2 shadow-lg"
+                    style={{
+                      top: dropdownPosition.top,
+                      right: dropdownPosition.right,
+                      left: "auto",
+                    }}
+                  >
+                    <div className="px-4 py-3">
+                      <p className="font-bold text-slate-800">{user.name || "User"}</p>
+                      <p className="mt-0.5 text-sm text-slate-500">{user.email}</p>
+                    </div>
+                    <div className="my-1 border-t border-slate-100" />
+                    <div className="py-1">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsProfileMenuOpen(false);
+                          logout();
+                        }}
+                        className="w-full px-4 py-2 text-left font-medium text-red-600 transition-colors hover:bg-red-50"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  </div>,
+                  document.body
+                )}
+            </div>
           ) : (
             <a
               href="/login"
