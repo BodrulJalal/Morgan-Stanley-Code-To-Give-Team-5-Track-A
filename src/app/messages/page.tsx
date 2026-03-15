@@ -220,14 +220,40 @@ function formatMessageTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatEventDate(iso: string): string {
-  return new Date(iso).toLocaleDateString([], {
+function formatEventDateRange(startIso: string, endIso: string): string {
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  const sameDay =
+    start.toDateString() === end.toDateString();
+
+  const datePart = start.toLocaleDateString([], {
     weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+
+  const startTime = start.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const endTime = end.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (sameDay) {
+    return `${datePart} \u2022 ${startTime} - ${endTime}`;
+  }
+
+  const endDateTime = end.toLocaleString([], {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  return `${datePart} \u2022 ${startTime} - ${endDateTime}`;
 }
 
 function formatPhotoDate(date: Date): string {
@@ -241,7 +267,26 @@ function formatPhotoDate(date: Date): string {
 // ─── MembersSidebar ───────────────────────────────────────────────────────────
 
 function MembersSidebar({ eventId }: { eventId: string }) {
-  const members = MOCK_MEMBERS[eventId] ?? [];
+  const { events } = useEvents();
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
+
+  const event = events.find((e) => e.id === eventId) ?? null;
+
+  let members: Member[] =
+    event && event.attendees.length > 0
+      ? event.attendees.map((attendeeId) => ({
+          id: attendeeId === currentUserId ? "you" : attendeeId,
+          name:
+            attendeeId === currentUserId
+              ? user?.name ?? "You"
+              : attendeeId,
+          role:
+            attendeeId === event.created_by_user_id ? "organizer" : "volunteer",
+          online: false,
+        }))
+      : MOCK_MEMBERS[eventId] ?? [];
+
   const online = members.filter((m) => m.online);
   const offline = members.filter((m) => !m.online);
 
@@ -388,7 +433,7 @@ function EventDetailsBanner({ event }: { event: FlyeringEvent }) {
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3zm-.5 2v4l3 1.5.5-.87-2.5-1.25V5H7.5z" />
           </svg>
           <span className="text-[12px] font-medium text-yellow-800 truncate">
-            {formatEventDate(event.start_time)} · {event.address}
+            {formatEventDateRange(event.start_time, event.end_time)} · {event.address}
           </span>
         </div>
         <svg

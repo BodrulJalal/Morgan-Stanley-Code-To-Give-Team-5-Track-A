@@ -22,6 +22,7 @@ export default function OrganizerPage() {
     title: "",
     address: "",
     date: "",
+    endDate: "",
     description: "",
     organization: "",
   });
@@ -61,14 +62,37 @@ export default function OrganizerPage() {
         return;
       }
 
-      if (!form.title.trim() || !form.address.trim() || !form.date.trim() || !form.description.trim()) {
+      if (
+        !form.title.trim() ||
+        !form.address.trim() ||
+        !form.date.trim() ||
+        !form.description.trim()
+      ) {
         setError("Please fill in all required fields, including description.");
         return;
       }
 
-      const eventDate = new Date(form.date);
-      if (eventDate <= new Date()) {
-        setError("Event date and time must be in the future.");
+      if (!form.endDate?.trim()) {
+        setError("Please select an end time for your event.");
+        return;
+      }
+
+      const eventStart = new Date(form.date);
+      const eventEnd = new Date(form.endDate);
+      const now = new Date();
+
+      if (isNaN(eventStart.getTime()) || isNaN(eventEnd.getTime())) {
+        setError("Please enter valid start and end times.");
+        return;
+      }
+
+      if (eventStart <= now) {
+        setError("Event start time must be in the future.");
+        return;
+      }
+
+      if (eventEnd <= eventStart) {
+        setError("End time must be after the start time.");
         return;
       }
 
@@ -105,10 +129,8 @@ export default function OrganizerPage() {
             ? first.place_name.split(",")[1]?.trim() ?? ""
             : "");
 
-        const startTime = new Date(form.date).toISOString();
-        const endTime = new Date(
-          new Date(form.date).getTime() + 2 * 60 * 60 * 1000
-        ).toISOString();
+        const startTime = eventStart.toISOString();
+        const endTime = eventEnd.toISOString();
 
         await createEvent({
           title: form.title.trim(),
@@ -207,25 +229,64 @@ export default function OrganizerPage() {
                 We&apos;ll geocode this into coordinates using Mapbox.
               </p>
             </div>
-            <div>
-              <label
-                htmlFor="date"
-                className="block text-xs font-semibold uppercase tracking-wide text-slate-800"
-              >
-                Date &amp; time
-              </label>
-              <input
-                id="date"
-                type="datetime-local"
-                value={form.date}
-                min={minDatetime || undefined}
-                max={maxDatetime || undefined}
-                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
-              />
-              <p className="mt-1 text-[11px] text-slate-500">
-                Event must be in the future.
-              </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="date"
+                  className="block text-xs font-semibold uppercase tracking-wide text-slate-800"
+                >
+                  Start date &amp; time
+                </label>
+                <input
+                  id="date"
+                  type="datetime-local"
+                  value={form.date}
+                  min={minDatetime || undefined}
+                  max={maxDatetime || undefined}
+                  onChange={(e) =>
+                    setForm((f) => {
+                      const value = e.target.value;
+                      return {
+                        ...f,
+                        date: value,
+                        endDate:
+                          f.endDate && new Date(f.endDate) > new Date(value)
+                            ? f.endDate
+                            : value,
+                      };
+                    })
+                  }
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                />
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Event start must be in the future.
+                </p>
+              </div>
+              <div>
+                <label
+                  htmlFor="endDate"
+                  className="block text-xs font-semibold uppercase tracking-wide text-slate-800"
+                >
+                  End date &amp; time
+                </label>
+                <input
+                  id="endDate"
+                  type="datetime-local"
+                  value={form.endDate || ""}
+                  min={form.date || minDatetime || undefined}
+                  max={maxDatetime || undefined}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      endDate: e.target.value,
+                    }))
+                  }
+                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+                />
+                <p className="mt-1 text-[11px] text-slate-500">
+                  End time must be after the start time.
+                </p>
+              </div>
             </div>
             <div>
               <label

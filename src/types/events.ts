@@ -53,7 +53,10 @@ export interface NewEventFormData {
   address: string;
   lat: number;
   lng: number;
+  /** ISO-ish datetime-local string for start time (from input) */
   date: string;
+  /** ISO-ish datetime-local string for end time (from input) */
+  endDate?: string;
   description: string;
   organization?: string;
 }
