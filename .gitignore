@@ -45,3 +45,4 @@ backend/.venv/
 backend/.env
 backend/__pyacache__
 backend/*.pyc
+__pycache__/ 
