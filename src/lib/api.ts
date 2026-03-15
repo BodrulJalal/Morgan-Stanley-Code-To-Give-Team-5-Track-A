@@ -4,10 +4,11 @@
  * On the server we use NEXT_PUBLIC_API_URL (default: http://localhost:8000).
  */
 
+import { supabase } from "@/lib/supabase";
+
 function getBaseUrl(): string {
-  if (typeof window !== "undefined") {
-    return ""; // browser: use relative URL so rewrites proxy to backend
-  }
+  // Use full backend URL everywhere so the browser sends requests directly to the backend.
+  // That way the Authorization header is always sent (Next.js rewrites may not forward it).
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 }
 
@@ -44,6 +45,21 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 
   return body as T;
+}
+
+/** Get headers with Bearer token for authenticated requests. Throws if not logged in. */
+async function authHeaders(): Promise<HeadersInit> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not authenticated. Please log in.");
+  }
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Authorization: `Bearer ${session.access_token}`,
+  };
 }
 
 export type ListEventsParams = {
@@ -106,13 +122,12 @@ export interface CreateEventBody {
 }
 
 export async function createEvent(body: CreateEventBody): Promise<ApiEventRow> {
+  const headers = await authHeaders();
+  const { created_by_user_id: _omit, ...payload } = body as CreateEventBody & { created_by_user_id?: string | null };
   const res = await fetch(apiUrl("/api/events"), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(body),
+    headers,
+    body: JSON.stringify(payload),
   });
   return handleResponse<ApiEventRow>(res);
 }
@@ -132,33 +147,21 @@ export async function getUserProfile(userId: string): Promise<UserProfile> {
   return handleResponse<UserProfile>(res);
 }
 
-export async function joinEvent(
-  eventId: string,
-  userId: string
-): Promise<{ event_id: string; user_id: string }> {
-  const res = await fetch(
-    apiUrl(`/api/events/${encodeURIComponent(eventId)}/attendees`),
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ user_id: userId }),
-    }
-  );
+export async function joinEvent(eventId: string): Promise<{ event_id: string; user_id: string }> {
+  const headers = await authHeaders();
+  const res = await fetch(apiUrl(`/api/events/${encodeURIComponent(eventId)}/attendees`), {
+    method: "POST",
+    headers,
+    body: "{}",
+  });
   return handleResponse<{ event_id: string; user_id: string }>(res);
 }
 
-export async function leaveEvent(
-  eventId: string,
-  userId: string
-): Promise<{ ok: boolean }> {
+export async function leaveEvent(eventId: string): Promise<{ ok: boolean }> {
+  const headers = await authHeaders();
   const res = await fetch(
-    apiUrl(
-      `/api/events/${encodeURIComponent(eventId)}/attendees/${encodeURIComponent(userId)}`
-    ),
-    { method: "DELETE", headers: { Accept: "application/json" } }
+    apiUrl(`/api/events/${encodeURIComponent(eventId)}/attendees/me`),
+    { method: "DELETE", headers }
   );
   return handleResponse<{ ok: boolean }>(res);
 }

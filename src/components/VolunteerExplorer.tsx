@@ -9,12 +9,13 @@ import { VolunteerLeaderboard } from "./VolunteerLeaderboard";
 import { FlyerTutorialModal } from "./FlyerTutorialModal";
 import { PosterConfirmationModal } from "./PosterConfirmationModal";
 import { downloadAreaFlyer } from "@/lib/downloadFlyer";
+import { isUserJoined } from "@/lib/attendance";
 
 export function VolunteerExplorer() {
   const { events, loading, error, refetch, toggleJoin } = useEvents();
   const { user, logout } = useAuth();
   const { awardFlyerPosted, adjustEventJoin } = useVolunteerProgress();
-  const currentUserId = user?.id ?? "00000000-0000-0000-0000-000000000001";
+  const currentUserId = user?.id ?? null;
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [flyerLoading, setFlyerLoading] = useState(false);
@@ -47,7 +48,7 @@ export function VolunteerExplorer() {
   const selectedEvent: FlyeringEvent | null =
     events.find((event) => event.id === selectedEventId) ?? null;
   const isSelectedEventJoined =
-    selectedEvent?.attendees?.includes(currentUserId) ?? false;
+    !!(currentUserId && selectedEvent && isUserJoined(selectedEvent, currentUserId));
 
   const handleSelectEvent = useCallback((event: FlyeringEvent | null) => {
     setSelectedEventId(event?.id ?? null);
@@ -67,7 +68,7 @@ export function VolunteerExplorer() {
       selectedEvent.lat,
       selectedEvent.lng,
       selectedEvent.title,
-      currentUserId,
+      currentUserId ?? "guest",
       { flyerLang: "en" }
     );
 
@@ -97,11 +98,12 @@ export function VolunteerExplorer() {
 
   const handleJoin = useCallback(
     async (eventId: string) => {
+      if (!currentUserId) return;
       const event = events.find((item) => item.id === eventId);
-      if (!event || event.attendees.includes(currentUserId)) return; // already joined, do nothing
+      if (!event || isUserJoined(event, currentUserId)) return;
       setJoinLoadingId(eventId);
       try {
-        await toggleJoin(eventId, currentUserId);
+        await toggleJoin(eventId);
         adjustEventJoin(true);
         setStatusMessage("You joined the event and earned event points.");
       } finally {
@@ -113,11 +115,12 @@ export function VolunteerExplorer() {
 
   const handleLeave = useCallback(
     async (eventId: string) => {
+      if (!currentUserId) return;
       const event = events.find((item) => item.id === eventId);
-      if (!event || !event.attendees.includes(currentUserId)) return;
+      if (!event || !isUserJoined(event, currentUserId)) return;
       setJoinLoadingId(eventId);
       try {
-        await toggleJoin(eventId, currentUserId);
+        await toggleJoin(eventId);
         adjustEventJoin(false);
         setStatusMessage("You left the event and your event points were updated.");
       } finally {
@@ -257,11 +260,13 @@ export function VolunteerExplorer() {
                     <button
                       type="button"
                       onClick={() => handleJoin(selectedEvent.id)}
-                      disabled={joinLoadingId === selectedEvent.id}
+                      disabled={joinLoadingId === selectedEvent.id || !currentUserId}
                       className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70"
                     >
                       {joinLoadingId === selectedEvent.id ? (
                         <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : !currentUserId ? (
+                        "Log in to join"
                       ) : (
                         "Join Event"
                       )}

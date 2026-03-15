@@ -15,6 +15,6 @@ Create event and Join/Leave event **require the Supabase service_role key** in `
 1. Open [Supabase Dashboard](https://supabase.com/dashboard) → your project → **Settings** → **API**.
 2. Copy the **service_role** key (secret, not the anon key).
 3. In `backend/.env` set: `SUPABASE_SERVICE_KEY=<paste service_role key>`.
-4. Restart the backend.
+4. Ensure `SUPABASE_URL` is set in `backend/.env` (same as above). Restart the backend.
 
-You do **not** need to be logged in as a user in the app. The backend uses the service role to perform writes on behalf of the app; the frontend still sends a placeholder user id for “who created” / “who joined” until you add real auth.
+**Authentication:** Create event and Join/Leave require a logged-in user. The frontend uses Supabase Auth and sends the JWT in the `Authorization: Bearer <token>` header. The backend verifies the token using Supabase's **JWKS endpoint** (asymmetric ECC/RSA keys). No JWT secret is required; `SUPABASE_URL` is used to fetch public keys from `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`.
