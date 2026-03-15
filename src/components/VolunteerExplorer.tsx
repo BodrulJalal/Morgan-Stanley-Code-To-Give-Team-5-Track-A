@@ -126,8 +126,8 @@ export function VolunteerExplorer() {
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
-            <span className="text-2xl" aria-hidden="true">
-              Lemon
+            <span className="text-2xl leading-none" aria-hidden="true">
+              🍋
             </span>
           </div>
           <div>
@@ -171,13 +171,6 @@ export function VolunteerExplorer() {
               placeholder="Search events…"
               aria-label="Search events by title, address, organizer, or city"
               className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
-            />
-          </div>
-
-          <div className="shrink-0 border-b border-slate-100 px-4 py-4">
-            <VolunteerLeaderboard
-              isExpanded={scoreboardExpanded}
-              onToggle={() => setScoreboardExpanded((prev) => !prev)}
             />
           </div>
 
@@ -348,6 +341,13 @@ export function VolunteerExplorer() {
                 )}
               </div>
             )}
+          </div>
+
+          <div className="shrink-0 border-t border-slate-100 px-4 py-4">
+            <VolunteerLeaderboard
+              isExpanded={scoreboardExpanded}
+              onToggle={() => setScoreboardExpanded((prev) => !prev)}
+            />
           </div>
         </section>
 
