@@ -23,6 +23,13 @@ type Photo = {
   uploadedAt: Date;
 };
 
+type Member = {
+  id: string;
+  name: string;
+  role: "organizer" | "volunteer";
+  online: boolean;
+};
+
 type Tab = "chat" | "photos";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -60,7 +67,6 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
   ],
 };
 
-// Mock photos use Unsplash source URLs — swap for real uploaded URLs when ready.
 const MOCK_PHOTOS: Record<string, Photo[]> = {
   "evt-1": [
     { id: "p1", url: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=600&q=80", caption: "Volunteers lined up and ready to go!", uploadedBy: "Maya G.", uploadedAt: new Date(Date.now() - 1000 * 60 * 60 * 3) },
@@ -74,6 +80,27 @@ const MOCK_PHOTOS: Record<string, Photo[]> = {
   ],
 };
 
+const MOCK_MEMBERS: Record<string, Member[]> = {
+  "evt-1": [
+    { id: "maya",  name: "Maya G.",  role: "organizer", online: true  },
+    { id: "james", name: "James L.", role: "volunteer", online: true  },
+    { id: "you",   name: "You",      role: "volunteer", online: true  },
+    { id: "priya", name: "Priya S.", role: "volunteer", online: false },
+    { id: "david", name: "David K.", role: "volunteer", online: false },
+  ],
+  "evt-2": [
+    { id: "james", name: "James L.", role: "organizer", online: true  },
+    { id: "you",   name: "You",      role: "volunteer", online: true  },
+    { id: "elena", name: "Elena M.", role: "volunteer", online: false },
+  ],
+  "evt-3": [
+    { id: "sofia", name: "Sofia R.", role: "organizer", online: true  },
+    { id: "you",   name: "You",      role: "volunteer", online: true  },
+    { id: "david", name: "David K.", role: "volunteer", online: true  },
+    { id: "ana",   name: "Ana L.",   role: "volunteer", online: false },
+  ],
+};
+
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
 function getInitials(title: string): string {
@@ -83,6 +110,10 @@ function getInitials(title: string): string {
 function avatarColor(id: string): string {
   const index = id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
+}
+
+function memberInitials(name: string): string {
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
 function formatMessageTime(date: Date): string {
@@ -98,6 +129,78 @@ function formatEventDate(iso: string): string {
 function formatPhotoDate(date: Date): string {
   return date.toLocaleDateString([], { month: "short", day: "numeric" }) +
     " at " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// ─── MembersSidebar ───────────────────────────────────────────────────────────
+
+function MembersSidebar({ eventId }: { eventId: string }) {
+  const members = MOCK_MEMBERS[eventId] ?? [];
+  const online  = members.filter((m) => m.online);
+  const offline = members.filter((m) => !m.online);
+
+  return (
+    <aside className="w-52 shrink-0 border-l border-gray-100 bg-gray-50 flex flex-col overflow-hidden">
+      <div className="px-4 pt-4 pb-3 shrink-0 border-b border-gray-100">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Members</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto py-3 scrollbar-hide">
+        {/* Online */}
+        {online.length > 0 && (
+          <div className="mb-1">
+            <p className="px-4 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+              Online — {online.length}
+            </p>
+            {online.map((m) => (
+              <MemberRow key={m.id} member={m} />
+            ))}
+          </div>
+        )}
+
+        {/* Offline */}
+        {offline.length > 0 && (
+          <div className="mt-3">
+            <p className="px-4 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+              Offline — {offline.length}
+            </p>
+            {offline.map((m) => (
+              <MemberRow key={m.id} member={m} />
+            ))}
+          </div>
+        )}
+
+        {members.length === 0 && (
+          <p className="px-4 text-[12px] text-gray-400">No members yet.</p>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function MemberRow({ member }: { member: Member }) {
+  const isYou = member.id === "you";
+  return (
+    <div className={`flex items-center gap-2.5 px-4 py-1.5 hover:bg-gray-100 transition-colors ${!member.online ? "opacity-50" : ""}`}>
+      <div className="relative shrink-0">
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold
+          ${isYou ? "bg-yellow-300 text-yellow-900" : "bg-gray-200 text-gray-600"}`}>
+          {memberInitials(member.name)}
+        </div>
+        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-gray-50
+          ${member.online ? "bg-emerald-400" : "bg-gray-300"}`}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[12px] font-medium truncate leading-tight ${member.online ? "text-gray-800" : "text-gray-400"}`}>
+          {member.name}
+          {isYou && <span className="text-gray-400 font-normal text-[11px]"> (you)</span>}
+        </p>
+        {member.role === "organizer" && (
+          <p className="text-[10px] text-yellow-600 font-medium leading-none mt-0.5">Organizer</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── WorkspaceItem ────────────────────────────────────────────────────────────
@@ -216,7 +319,6 @@ function PhotoGrid({ eventId, photos, onAddPhotos }: {
   const processFiles = useCallback((files: FileList) => {
     const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (!validFiles.length) return;
-
     const newPhotos: Photo[] = validFiles.map((file) => ({
       id: `uploaded-${Date.now()}-${Math.random()}`,
       url: URL.createObjectURL(file),
@@ -240,7 +342,6 @@ function PhotoGrid({ eventId, photos, onAddPhotos }: {
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      {/* Upload strip */}
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
@@ -259,19 +360,15 @@ function PhotoGrid({ eventId, photos, onAddPhotos }: {
         <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
       </div>
 
-      {/* Empty state */}
       {photos.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 pt-4 pb-10 text-center px-10">
           <p className="text-[13px] text-gray-400">No photos yet — be the first to share one!</p>
         </div>
       ) : (
         <div className="px-5 pb-6">
-          {/* Photo count */}
           <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-3">
             {photos.length} photo{photos.length !== 1 ? "s" : ""}
           </p>
-
-          {/* Masonry-ish grid */}
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             {photos.map((photo) => (
               <button
@@ -280,12 +377,7 @@ function PhotoGrid({ eventId, photos, onAddPhotos }: {
                 className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.url}
-                  alt={photo.caption}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                {/* Hover overlay */}
+                <img src={photo.url} alt={photo.caption} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-end p-2.5">
                   <p className="text-white text-[11px] font-medium leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-200 line-clamp-2">
                     {photo.caption}
@@ -297,16 +389,9 @@ function PhotoGrid({ eventId, photos, onAddPhotos }: {
         </div>
       )}
 
-      {/* Lightbox */}
       {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <div
-            className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+          <div className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={lightbox.url} alt={lightbox.caption} className="w-full max-h-[60vh] object-cover" />
             <div className="px-5 py-4">
@@ -316,10 +401,7 @@ function PhotoGrid({ eventId, photos, onAddPhotos }: {
                 <p className="text-[11px] text-gray-400 font-mono">{formatPhotoDate(lightbox.uploadedAt)}</p>
               </div>
             </div>
-            <button
-              onClick={() => setLightbox(null)}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors"
-            >
+            <button onClick={() => setLightbox(null)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors">
               <svg className="w-4 h-4 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8"/>
               </svg>
@@ -337,6 +419,7 @@ export default function MessagesPage() {
   const { events, loading } = useEvents();
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("chat");
+  const [membersSidebarOpen, setMembersSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<Record<string, Message[]>>(MOCK_MESSAGES);
   const [photos, setPhotos] = useState<Record<string, Photo[]>>(MOCK_PHOTOS);
   const [input, setInput] = useState("");
@@ -348,6 +431,8 @@ export default function MessagesPage() {
   const activeEvent = events.find((e) => e.id === activeEventId) ?? null;
   const activeMessages = activeEventId ? (messages[activeEventId] ?? []) : [];
   const activePhotos = activeEventId ? (photos[activeEventId] ?? []) : [];
+  const activeMembers = activeEventId ? (MOCK_MEMBERS[activeEventId] ?? []) : [];
+  const onlineCount = activeMembers.filter((m) => m.online).length;
 
   const filteredEvents = events.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -358,8 +443,10 @@ export default function MessagesPage() {
     if (activeTab === "chat") bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeMessages, activeTab]);
 
-  // Reset tab to chat when switching workspaces
-  useEffect(() => { setActiveTab("chat"); }, [activeEventId]);
+  useEffect(() => {
+    setActiveTab("chat");
+    setMembersSidebarOpen(false);
+  }, [activeEventId]);
 
   function handleSelect(id: string) {
     setActiveEventId(id);
@@ -404,7 +491,7 @@ export default function MessagesPage() {
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Sidebar */}
+        {/* Left sidebar — workspace list */}
         <aside className="w-70 shrink-0 bg-yellow-50 border-r border-gray-200 flex flex-col overflow-hidden">
           <div className="px-4 pt-4 pb-3 shrink-0">
             <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase mb-3">Your Workspaces</p>
@@ -438,8 +525,8 @@ export default function MessagesPage() {
           </div>
         </aside>
 
-        {/* Chat panel */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-white">
+        {/* Center — chat panel */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-white min-w-0">
           {activeEvent ? (
             <>
               {/* Chat header */}
@@ -451,10 +538,19 @@ export default function MessagesPage() {
                   <p className="text-[13px] font-medium text-gray-900 truncate leading-tight">{activeEvent.title}</p>
                   <p className="text-[11px] text-gray-400 truncate">{activeEvent.city}</p>
                 </div>
-                <div className="flex items-center gap-1.5 text-[12px] text-gray-400 shrink-0">
+                {/* Members toggle button */}
+                <button
+                  onClick={() => setMembersSidebarOpen((p) => !p)}
+                  className={`flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-lg transition-colors shrink-0
+                    ${membersSidebarOpen ? "bg-yellow-100 text-yellow-800" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"}`}
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                  {activeEvent.attendees.length} members
-                </div>
+                  {onlineCount > 0 ? `${onlineCount} online` : `${activeMembers.length} members`}
+                  {/* People icon */}
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H2zm11-8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm2 5.5c0-.83-.42-1.57-1.07-2.02A5.98 5.98 0 0 1 16 13c0 .55-.45 1-1 1h-1.5a3.5 3.5 0 0 0 .5-1.5z"/>
+                  </svg>
+                </button>
               </div>
 
               {/* Pinned event details banner */}
@@ -524,11 +620,7 @@ export default function MessagesPage() {
                   </div>
                 </>
               ) : (
-                <PhotoGrid
-                  eventId={activeEvent.id}
-                  photos={activePhotos}
-                  onAddPhotos={handleAddPhotos}
-                />
+                <PhotoGrid eventId={activeEvent.id} photos={activePhotos} onAddPhotos={handleAddPhotos} />
               )}
             </>
           ) : (
@@ -541,6 +633,11 @@ export default function MessagesPage() {
             </div>
           )}
         </main>
+
+        {/* Right sidebar — members (collapsible) */}
+        {activeEvent && membersSidebarOpen && (
+          <MembersSidebar eventId={activeEvent.id} />
+        )}
       </div>
     </div>
   );
