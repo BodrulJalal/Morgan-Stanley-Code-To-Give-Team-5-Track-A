@@ -31,6 +31,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} h-screen overflow-hidden antialiased bg-[#FCF8F2] text-slate-800`}
+        suppressHydrationWarning
       >
         <MantineProvider defaultColorScheme="light">
           <AuthProvider>

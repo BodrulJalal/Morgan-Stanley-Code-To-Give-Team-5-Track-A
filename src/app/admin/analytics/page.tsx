@@ -1,13 +1,15 @@
 "use client";
 
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Container, Loader, Stack, Text, Title } from "@mantine/core";
 import { EngagementHeatmapAndRecurringSection } from "@/components/admin/EngagementHeatmapAndRecurringSection";
 import { OrganizationBreakdownSection } from "@/components/admin/OrganizationBreakdownSection";
 import { ParticipationDistributionSection } from "@/components/admin/ParticipationDistributionSection";
 import { WeeklyEngagementTrendSection } from "@/components/admin/WeeklyEngagementTrendSection";
-import { mockAdminMetrics } from "@/components/data/adminMockData";
+import { useAdminData } from "@/context/AdminDataContext";
 
 export default function AdminAnalyticsOverviewPage() {
+  const { metrics, loading } = useAdminData();
+
   return (
     <Container size="xl" py="md">
       <Stack gap="lg">
@@ -18,10 +20,16 @@ export default function AdminAnalyticsOverviewPage() {
           </Text>
         </div>
 
-        <WeeklyEngagementTrendSection metrics={mockAdminMetrics} />
-        <EngagementHeatmapAndRecurringSection metrics={mockAdminMetrics} />
-        <ParticipationDistributionSection metrics={mockAdminMetrics} />
-        <OrganizationBreakdownSection metrics={mockAdminMetrics} />
+        {loading || !metrics ? (
+          <Loader size="sm" />
+        ) : (
+          <>
+            <WeeklyEngagementTrendSection metrics={metrics} />
+            <EngagementHeatmapAndRecurringSection metrics={metrics} />
+            <ParticipationDistributionSection metrics={metrics} />
+            <OrganizationBreakdownSection metrics={metrics} />
+          </>
+        )}
       </Stack>
     </Container>
   );
