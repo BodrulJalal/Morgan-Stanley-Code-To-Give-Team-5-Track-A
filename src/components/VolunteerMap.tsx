@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import Map, { Marker, Popup, type MarkerEvent, type MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { FlyeringEvent } from "@/types/events";
+import { VolunteerAIAssistant } from "@/components/VolunteerAIAssistant";
 
 const NYC_CENTER = { longitude: -73.9857, latitude: 40.7484 };
 const INITIAL_ZOOM = 10;
@@ -139,6 +140,7 @@ export function VolunteerMap({
           </Popup>
         )}
       </Map>
+      <VolunteerAIAssistant />
     </div>
   );
 }
