@@ -18,6 +18,7 @@ export function VolunteerExplorer() {
   const currentUserId = user?.id ?? null;
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showOnlyJoined, setShowOnlyJoined] = useState(false);
   const [flyerLoading, setFlyerLoading] = useState(false);
   const [flyerError, setFlyerError] = useState<string | null>(null);
   const [joinLoadingId, setJoinLoadingId] = useState<string | null>(null);
@@ -32,7 +33,15 @@ export function VolunteerExplorer() {
 
   const filteredEvents = useMemo(() => {
     const now = new Date();
-    const futureEvents = events.filter((e) => new Date(e.start_time) > now);
+    let futureEvents = events.filter((e) => new Date(e.start_time) > now);
+
+    if (showOnlyJoined) {
+      if (!currentUserId) {
+        return [];
+      }
+      futureEvents = futureEvents.filter((e) => isUserJoined(e, currentUserId));
+    }
+
     const q = searchQuery.trim().toLowerCase();
     if (!q) return futureEvents;
     return futureEvents.filter(
@@ -43,7 +52,7 @@ export function VolunteerExplorer() {
         (e.organizer_name?.toLowerCase().includes(q)) ||
         (e.city?.toLowerCase().includes(q))
     );
-  }, [events, searchQuery]);
+  }, [events, searchQuery, showOnlyJoined, currentUserId]);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((event) => event.id === selectedEventId) ?? null;
@@ -195,12 +204,27 @@ export function VolunteerExplorer() {
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 md:flex-row md:p-6">
         <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-slate-100 md:w-95 md:shrink-0">
           <div className="flex shrink-0 flex-col border-b border-slate-100 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-800">
-              Upcoming flyering events
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Tap a map marker or event card to see details and download a flyer.
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-800">
+                  Upcoming flyering events
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Tap a map marker or event card to see details.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOnlyJoined((prev) => !prev)}
+                className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-semibold transition-colors duration-150 ${
+                  showOnlyJoined
+                    ? "bg-purple-600 text-white shadow-md"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <span>Joined Events</span>
+              </button>
+            </div>
             <input
               type="search"
               value={searchQuery}
@@ -352,6 +376,8 @@ export function VolunteerExplorer() {
               <div className="space-y-3">
                 {filteredEvents.map((event) => {
                   const isActive = event.id === selectedEventId;
+                  const isJoined =
+                    !!currentUserId && isUserJoined(event, currentUserId);
                   return (
                     <button
                       key={event.id}
@@ -360,25 +386,45 @@ export function VolunteerExplorer() {
                       className={`w-full rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
                         isActive
                           ? "border-purple-500 bg-purple-50/70"
-                          : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                          : isJoined
+                            ? "border-purple-400 bg-purple-50"
+                            : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-sm font-semibold text-slate-800">
+                          <h3
+                            className={`truncate text-sm font-semibold ${
+                              isJoined ? "text-purple-800" : "text-slate-800"
+                            }`}
+                          >
                             {event.title}
                           </h3>
-                          <p className="mt-0.5 text-xs text-slate-500">
+                          <p
+                            className={`mt-0.5 text-xs ${
+                              isJoined ? "text-purple-700" : "text-slate-500"
+                            }`}
+                          >
                             {new Date(event.start_time).toLocaleString("en-US", {
                               dateStyle: "medium",
                               timeStyle: "short",
                             })}
                           </p>
-                          <p className="mt-0.5 line-clamp-1 text-xs text-slate-600">
+                          <p
+                            className={`mt-0.5 line-clamp-1 text-xs ${
+                              isJoined ? "text-purple-700" : "text-slate-600"
+                            }`}
+                          >
                             {event.address}
                           </p>
                         </div>
-                        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                        <span
+                          className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                            isJoined
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
                           <span aria-hidden="true">👥</span>
                           {(event.attendees?.length ?? 0)}
                         </span>
@@ -388,22 +434,17 @@ export function VolunteerExplorer() {
                 })}
                 {filteredEvents.length === 0 && (
                   <p className="py-4 text-center text-xs text-slate-500">
-                    {events.length === 0
-                      ? "No events yet. Be the first to create one in the Organizer Hub."
-                      : !events.some((e) => new Date(e.start_time) > new Date())
-                        ? "No upcoming events right now."
-                        : "No events match your search. Try a different term."}
+                    {showOnlyJoined
+                      ? "You haven't joined any events yet! Turn off this filter to explore upcoming flyering campaigns."
+                      : events.length === 0
+                        ? "No events yet. Be the first to create one in the Organizer Hub."
+                        : !events.some((e) => new Date(e.start_time) > new Date())
+                          ? "No upcoming events right now."
+                          : "No events match your search. Try a different term."}
                   </p>
                 )}
               </div>
             )}
-          </div>
-
-          <div className="shrink-0 border-t border-slate-100 px-4 py-4">
-            <VolunteerLeaderboard
-              isExpanded={scoreboardExpanded}
-              onToggle={() => setScoreboardExpanded((prev) => !prev)}
-            />
           </div>
         </section>
 
@@ -413,7 +454,16 @@ export function VolunteerExplorer() {
               events={filteredEvents}
               selectedEventId={selectedEventId}
               onSelectEvent={handleSelectEvent}
+              currentUserId={currentUserId}
             />
+            <div className="pointer-events-none absolute right-2 top-2 z-20 flex justify-end md:right-4 md:top-4">
+              <div className="pointer-events-auto w-full max-w-xs">
+                <VolunteerLeaderboard
+                  isExpanded={scoreboardExpanded}
+                  onToggle={() => setScoreboardExpanded((prev) => !prev)}
+                />
+              </div>
+            </div>
           </div>
         </section>
       </main>
