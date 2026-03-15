@@ -3,7 +3,7 @@ from supabase import create_client, Client
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from typing import Literal 
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 from auth import get_current_user_id
@@ -42,3 +42,45 @@ def get_leaderboard (limit: int = 10):
 	)
 
 	return {"scoreboard": result.data}
+
+
+@router.get("/{user_id}")
+def get_user_score (user_id: str):
+	
+	result = (
+		supabase.table("scoreboard")
+		.select("*")
+		.eq("user_id", user_id)
+		.single()
+		.execute()
+	)
+
+	if not result.data:
+		raise HTTPException(status_code=404, detail="Resource (score) not found")
+	return result.data
+
+
+@router.post("/{user_id}/increment", status_code=200)
+def increment_score (user_id: str, body: ScoreIncrement):
+	
+	points = POINTS[body.action]
+	field = "flyers_posted" if body.action == "flyer_posted" else "event_joined"
+
+	existing = supabase.table("scoreboard").select("*").eq("user_id", user_id).execute()
+
+	if not existing.data:
+		supabase.table("scoreboard").insert({
+			"user_id": user_id,
+			"points": points,
+			field: 1,
+			"updated_at": datetime.now(timezone.utc).isoformat()
+		}).execute()
+	else:
+		current = existing.data[0]
+		supabase.table("scoreboard").update({
+			"points": current["points"] + points,
+			field: current[field] + 1,
+			"updated_at": datetime.now(timezone.utc).isoformat()
+		}).eq("user_id", user_id).execute()
+
+	return {"user_id": user_id, "action": body.action, "points_awarded": points}
