@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
 import { useAuth } from "@/context/AuthContext";
 import { useVolunteerProgress } from "@/context/VolunteerProgressContext";
@@ -27,6 +27,7 @@ export function VolunteerExplorer() {
   const [posterConfirmOpen, setPosterConfirmOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [showFullDetails, setShowFullDetails] = useState(false);
+  const eventCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     refetch();
@@ -58,6 +59,18 @@ export function VolunteerExplorer() {
         (e.city?.toLowerCase().includes(q))
     );
   }, [events, searchQuery, showOnlyJoined, currentUserId]);
+
+  useEffect(() => {
+    if (!selectedEventId) return;
+    const rafId = window.requestAnimationFrame(() => {
+      eventCardRefs.current[selectedEventId]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, [selectedEventId, filteredEvents.length]);
 
   const selectedEvent: FlyeringEvent | null =
     events.find((event) => event.id === selectedEventId) ?? null;
@@ -266,6 +279,9 @@ export function VolunteerExplorer() {
                   return (
                     <div
                       key={event.id}
+                      ref={(el) => {
+                        eventCardRefs.current[event.id] = el;
+                      }}
                       className={`rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
                         isActive
                           ? "border-primary-500 bg-primary-50/70"
