@@ -115,7 +115,7 @@ function WorkspaceItem({ event, isActive, unreadCount, lastMessage, onClick }: {
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-100
         ${isActive ? "bg-white border border-gray-200 shadow-sm" : "hover:bg-white/60 border border-transparent"}`}
     >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(event.id)}`}>
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0 ${avatarColor(event.id)}`}>
         {getInitials(event.title)}
       </div>
       <div className="flex-1 min-w-0">
@@ -125,7 +125,7 @@ function WorkspaceItem({ event, isActive, unreadCount, lastMessage, onClick }: {
         </p>
       </div>
       {unreadCount > 0 && (
-        <span className="flex-shrink-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full px-2 py-0.5">
+        <span className="shrink-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full px-2 py-0.5">
           {unreadCount}
         </span>
       )}
@@ -138,20 +138,20 @@ function WorkspaceItem({ event, isActive, unreadCount, lastMessage, onClick }: {
 function EventDetailsBanner({ event }: { event: FlyeringEvent }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
-    <div className="border-b border-gray-100 bg-yellow-50 flex-shrink-0">
+    <div className="border-b border-gray-100 bg-yellow-50 shrink-0">
       <button
         onClick={() => setCollapsed((p) => !p)}
         className="w-full flex items-center justify-between px-5 py-2.5 text-left hover:bg-yellow-100/60 transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <svg className="w-3.5 h-3.5 text-yellow-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+          <svg className="w-3.5 h-3.5 text-yellow-600 shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3zm-.5 2v4l3 1.5.5-.87-2.5-1.25V5H7.5z"/>
           </svg>
           <span className="text-[12px] font-medium text-yellow-800 truncate">
             {formatEventDate(event.start_time)} · {event.address}
           </span>
         </div>
-        <svg className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 ml-3 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
+        <svg className={`w-3.5 h-3.5 text-gray-400 shrink-0 ml-3 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
           viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 6l4 4 4-4"/>
         </svg>
@@ -183,7 +183,7 @@ function MessageBubble({ msg }: { msg: Message }) {
   return (
     <div className={`flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : ""}`}>
       {!isMe && (
-        <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-600 flex-shrink-0">
+        <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-600 shrink-0">
           {msg.senderName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
         </div>
       )}
@@ -196,7 +196,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         <span className="text-[10px] text-gray-400 mt-1 mx-1 font-mono">{formatMessageTime(msg.timestamp)}</span>
       </div>
       {isMe && (
-        <div className="w-7 h-7 rounded-full bg-yellow-300 flex items-center justify-center text-[10px] font-bold text-yellow-900 flex-shrink-0">N</div>
+        <div className="w-7 h-7 rounded-full bg-yellow-300 flex items-center justify-center text-[10px] font-bold text-yellow-900 shrink-0">N</div>
       )}
     </div>
   );
@@ -391,7 +391,7 @@ export default function MessagesPage() {
   return (
     <div className="flex flex-col h-screen bg-yellow-50 overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between bg-yellow-400 px-5 h-[52px] flex-shrink-0">
+      <header className="flex items-center justify-between bg-yellow-400 px-5 h-13 shrink-0">
         <span className="text-[18px] font-semibold text-gray-900 tracking-tight">
           <span className="inline-block w-6 h-6 bg-gray-900 rounded-full mr-2 align-middle mb-0.5" />
           Lemon
@@ -405,8 +405,8 @@ export default function MessagesPage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* Sidebar */}
-        <aside className="w-[280px] flex-shrink-0 bg-yellow-50 border-r border-gray-200 flex flex-col overflow-hidden">
-          <div className="px-4 pt-4 pb-3 flex-shrink-0">
+        <aside className="w-70 shrink-0 bg-yellow-50 border-r border-gray-200 flex flex-col overflow-hidden">
+          <div className="px-4 pt-4 pb-3 shrink-0">
             <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase mb-3">Your Workspaces</p>
             <input
               type="text"
@@ -443,15 +443,15 @@ export default function MessagesPage() {
           {activeEvent ? (
             <>
               {/* Chat header */}
-              <div className="flex items-center gap-3 px-5 h-[52px] border-b border-gray-100 flex-shrink-0">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${avatarColor(activeEvent.id)}`}>
+              <div className="flex items-center gap-3 px-5 h-13 border-b border-gray-100 shrink-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-semibold shrink-0 ${avatarColor(activeEvent.id)}`}>
                   {getInitials(activeEvent.title)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-gray-900 truncate leading-tight">{activeEvent.title}</p>
                   <p className="text-[11px] text-gray-400 truncate">{activeEvent.city}</p>
                 </div>
-                <div className="flex items-center gap-1.5 text-[12px] text-gray-400 flex-shrink-0">
+                <div className="flex items-center gap-1.5 text-[12px] text-gray-400 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                   {activeEvent.attendees.length} members
                 </div>
@@ -461,7 +461,7 @@ export default function MessagesPage() {
               <EventDetailsBanner event={activeEvent} />
 
               {/* Tab bar */}
-              <div className="flex border-b border-gray-100 flex-shrink-0 px-5">
+              <div className="flex border-b border-gray-100 shrink-0 px-5">
                 {(["chat", "photos"] as Tab[]).map((tab) => (
                   <button
                     key={tab}
@@ -480,7 +480,7 @@ export default function MessagesPage() {
                       </span>
                     )}
                     {activeTab === tab && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-yellow-400 rounded-full" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400 rounded-full" />
                     )}
                   </button>
                 ))}
@@ -502,7 +502,7 @@ export default function MessagesPage() {
                     )}
                     <div ref={bottomRef} />
                   </div>
-                  <div className="flex items-end gap-2.5 px-4 py-3 border-t border-gray-100 flex-shrink-0">
+                  <div className="flex items-end gap-2.5 px-4 py-3 border-t border-gray-100 shrink-0">
                     <textarea
                       ref={inputRef}
                       value={input}
@@ -515,7 +515,7 @@ export default function MessagesPage() {
                     <button
                       onClick={handleSend}
                       disabled={!input.trim()}
-                      className="w-9 h-9 rounded-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
+                      className="w-9 h-9 rounded-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center shrink-0"
                     >
                       <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                         <path d="M14 8L2 2l2.5 6L2 14l12-6z" fill="#1a1a1a" />
@@ -535,7 +535,7 @@ export default function MessagesPage() {
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-10">
               <div className="w-12 h-12 rounded-2xl bg-yellow-100 flex items-center justify-center text-2xl mb-1">💬</div>
               <p className="text-[15px] font-medium text-gray-800">No workspace selected</p>
-              <p className="text-[13px] text-gray-400 max-w-[220px] leading-relaxed">
+              <p className="text-[13px] text-gray-400 max-w-55 leading-relaxed">
                 Pick a workspace on the left to start chatting with your team.
               </p>
             </div>

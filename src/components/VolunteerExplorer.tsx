@@ -162,7 +162,7 @@ export function VolunteerExplorer() {
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 md:flex-row md:p-6">
-        <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-slate-100 md:w-[380px] md:shrink-0">
+        <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-slate-100 md:w-95 md:shrink-0">
           <div className="flex shrink-0 flex-col border-b border-slate-100 px-4 py-3">
             <h2 className="text-sm font-semibold text-slate-800">
               Upcoming flyering events
