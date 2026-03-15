@@ -9,21 +9,28 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { supabase } from "@/lib/supabase";
-import type { FlyeringEvent, EventWithAttendeesRow } from "@/types/events";
+import {
+  getEvents,
+  joinEvent,
+  leaveEvent,
+  type ApiEventRow,
+  type ApiError,
+} from "@/lib/api";
+import type { FlyeringEvent } from "@/types/events";
 
 const MAX_SPOTS = 20;
 
-function mapRowToEvent(row: EventWithAttendeesRow): FlyeringEvent {
+function mapRowToEvent(row: ApiEventRow): FlyeringEvent {
   const attendees = (row.event_attendees ?? []).map((a) => a.user_id);
+  const lng = row.lng ?? row.long ?? 0;
   return {
     id: row.id,
     title: row.title,
-    description: row.description,
+    description: row.description ?? "",
     address: row.address,
-    city: row.city,
+    city: row.city ?? "",
     lat: row.lat,
-    lng: row.lng,
+    lng,
     start_time: row.start_time,
     end_time: row.end_time,
     organizer_name: row.organizer_name,
@@ -52,21 +59,12 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     setError(null);
     setLoading(true);
     try {
-      const { data, error: fetchError } = await supabase
-        .from("events")
-        .select("*, event_attendees(user_id)")
-        .order("start_time", { ascending: true });
-
-      if (fetchError) {
-        setError(fetchError.message);
-        setEvents([]);
-        return;
-      }
-
-      const rows = (data ?? []) as EventWithAttendeesRow[];
-      setEvents(rows.map(mapRowToEvent));
+      const { events: rows } = await getEvents({ upcoming_only: false });
+      setEvents((rows ?? []).map(mapRowToEvent));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load events";
+      const apiErr = err as ApiError;
+      const message =
+        apiErr?.message ?? (err instanceof Error ? err.message : "Failed to load events");
       setError(message);
       setEvents([]);
     } finally {
@@ -82,29 +80,30 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     const event = events.find((e) => e.id === eventId);
     if (!event) return;
     const isJoined = event.attendees.includes(userId);
-
+    // Never call join when already in attendees (prevent double-join)
     if (isJoined) {
-      const { error: deleteError } = await supabase
-        .from("event_attendees")
-        .delete()
-        .eq("event_id", eventId)
-        .eq("user_id", userId);
-
-      if (deleteError) {
-        setError(deleteError.message);
-        return;
+      try {
+        await leaveEvent(eventId, userId);
+        await refetch();
+      } catch (err) {
+        const apiErr = err as ApiError;
+        setError(
+          apiErr?.message ??
+            (err instanceof Error ? err.message : "Failed to leave event")
+        );
       }
-    } else {
-      const { error: insertError } = await supabase
-        .from("event_attendees")
-        .insert({ event_id: eventId, user_id: userId });
-
-      if (insertError) {
-        setError(insertError.message);
-        return;
-      }
+      return;
     }
-    await refetch();
+    try {
+      await joinEvent(eventId, userId);
+      await refetch();
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(
+        apiErr?.message ??
+          (err instanceof Error ? err.message : "Failed to update attendance")
+      );
+    }
   }, [events, refetch]);
 
   const value = useMemo<EventsContextValue>(

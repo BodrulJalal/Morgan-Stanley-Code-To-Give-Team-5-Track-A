@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createEvent, type ApiError } from "@/lib/api";
 
 function toDatetimeLocal(d: Date) {
   const y = d.getFullYear();
@@ -104,27 +104,25 @@ export default function OrganizerPage() {
           new Date(form.date).getTime() + 2 * 60 * 60 * 1000
         ).toISOString();
 
-        const { error: insertError } = await supabase.from("events").insert({
+        await createEvent({
           title: form.title.trim(),
-          description: form.description.trim(),
+          description: form.description.trim() || undefined,
           address: form.address.trim(),
-          city: city || (form.address.trim().split(",")[0]?.trim() ?? ""),
+          city: city || undefined,
           lat: Number(lat),
-          lng: Number(lng),
+          long: Number(lng), // backend expects "long"
           start_time: startTime,
           end_time: endTime,
           organizer_name: form.organization.trim() || "",
           created_by_user_id: MOCK_CREATOR_USER_ID,
         });
 
-        if (insertError) {
-          throw new Error(insertError.message);
-        }
-
         router.push("/");
       } catch (err) {
+        const apiErr = err as ApiError;
         const message =
-          err instanceof Error ? err.message : "Address lookup failed. Please try again.";
+          apiErr?.message ??
+          (err instanceof Error ? err.message : "Something went wrong. Please try again.");
         setError(message);
       } finally {
         setIsSubmitting(false);

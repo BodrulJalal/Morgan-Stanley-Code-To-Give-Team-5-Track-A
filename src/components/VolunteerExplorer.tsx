@@ -94,20 +94,31 @@ export function VolunteerExplorer() {
     await handleFlyerDownload();
   }, [handleFlyerDownload]);
 
-  const handleToggleJoin = useCallback(
+  const handleJoin = useCallback(
     async (eventId: string) => {
       const event = events.find((item) => item.id === eventId);
-      const wasJoined = event?.attendees?.includes(currentUserId) ?? false;
-
+      if (!event || event.attendees.includes(currentUserId)) return; // already joined, do nothing
       setJoinLoadingId(eventId);
       try {
         await toggleJoin(eventId, currentUserId);
-        adjustEventJoin(!wasJoined);
-        setStatusMessage(
-          wasJoined
-            ? "You left the event and your event points were updated."
-            : "You joined the event and earned event points."
-        );
+        adjustEventJoin(true);
+        setStatusMessage("You joined the event and earned event points.");
+      } finally {
+        setJoinLoadingId(null);
+      }
+    },
+    [events, toggleJoin, currentUserId, adjustEventJoin]
+  );
+
+  const handleLeave = useCallback(
+    async (eventId: string) => {
+      const event = events.find((item) => item.id === eventId);
+      if (!event || !event.attendees.includes(currentUserId)) return;
+      setJoinLoadingId(eventId);
+      try {
+        await toggleJoin(eventId, currentUserId);
+        adjustEventJoin(false);
+        setStatusMessage("You left the event and your event points were updated.");
       } finally {
         setJoinLoadingId(null);
       }
@@ -204,24 +215,41 @@ export function VolunteerExplorer() {
                   </span>
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleJoin(selectedEvent.id)}
-                    disabled={joinLoadingId === selectedEvent.id}
-                    className={`rounded-full px-6 py-2 text-sm font-bold shadow-md transition-colors duration-200 disabled:opacity-70 ${
-                      isSelectedEventJoined
-                        ? "border border-green-300 bg-green-100 text-green-800 hover:bg-green-50"
-                        : "bg-purple-600 text-white hover:bg-purple-700"
-                    }`}
-                  >
-                    {joinLoadingId === selectedEvent.id ? (
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    ) : isSelectedEventJoined ? (
-                      "Joined ✅"
-                    ) : (
-                      "Join Event"
-                    )}
-                  </button>
+                  {isSelectedEventJoined ? (
+                    <>
+                      <span
+                        className="rounded-full border border-green-300 bg-green-100 px-6 py-2 text-sm font-bold text-green-800"
+                        aria-label="You have joined this event"
+                      >
+                        Joined ✅
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleLeave(selectedEvent.id)}
+                        disabled={joinLoadingId === selectedEvent.id}
+                        className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-70"
+                      >
+                        {joinLoadingId === selectedEvent.id ? (
+                          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                          "Leave event"
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleJoin(selectedEvent.id)}
+                      disabled={joinLoadingId === selectedEvent.id}
+                      className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70"
+                    >
+                      {joinLoadingId === selectedEvent.id ? (
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : (
+                        "Join Event"
+                      )}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleOpenTutorial}
