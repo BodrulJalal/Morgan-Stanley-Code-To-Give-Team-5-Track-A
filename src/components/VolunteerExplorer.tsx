@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useEvents, type FlyeringEvent } from "@/context/EventsContext";
+import { useAuth } from "@/context/AuthContext";
 import { useVolunteerProgress } from "@/context/VolunteerProgressContext";
 import { VolunteerMap } from "./VolunteerMap";
 import { VolunteerLeaderboard } from "./VolunteerLeaderboard";
@@ -11,9 +12,9 @@ import { downloadAreaFlyer } from "@/lib/downloadFlyer";
 
 export function VolunteerExplorer() {
   const { events, loading, error, refetch, toggleJoin } = useEvents();
+  const { user, logout } = useAuth();
   const { awardFlyerPosted, adjustEventJoin } = useVolunteerProgress();
-  // Placeholder until Supabase Auth is integrated; replace with session.user.id
-  const currentUserId = "00000000-0000-0000-0000-000000000001";
+  const currentUserId = user?.id ?? "00000000-0000-0000-0000-000000000001";
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [flyerLoading, setFlyerLoading] = useState(false);
@@ -94,20 +95,31 @@ export function VolunteerExplorer() {
     await handleFlyerDownload();
   }, [handleFlyerDownload]);
 
-  const handleToggleJoin = useCallback(
+  const handleJoin = useCallback(
     async (eventId: string) => {
       const event = events.find((item) => item.id === eventId);
-      const wasJoined = event?.attendees?.includes(currentUserId) ?? false;
-
+      if (!event || event.attendees.includes(currentUserId)) return; // already joined, do nothing
       setJoinLoadingId(eventId);
       try {
         await toggleJoin(eventId, currentUserId);
-        adjustEventJoin(!wasJoined);
-        setStatusMessage(
-          wasJoined
-            ? "You left the event and your event points were updated."
-            : "You joined the event and earned event points."
-        );
+        adjustEventJoin(true);
+        setStatusMessage("You joined the event and earned event points.");
+      } finally {
+        setJoinLoadingId(null);
+      }
+    },
+    [events, toggleJoin, currentUserId, adjustEventJoin]
+  );
+
+  const handleLeave = useCallback(
+    async (eventId: string) => {
+      const event = events.find((item) => item.id === eventId);
+      if (!event || !event.attendees.includes(currentUserId)) return;
+      setJoinLoadingId(eventId);
+      try {
+        await toggleJoin(eventId, currentUserId);
+        adjustEventJoin(false);
+        setStatusMessage("You left the event and your event points were updated.");
       } finally {
         setJoinLoadingId(null);
       }
@@ -126,8 +138,8 @@ export function VolunteerExplorer() {
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
-            <span className="text-2xl" aria-hidden="true">
-              Lemon
+            <span className="text-2xl leading-none" aria-hidden="true">
+              🍋
             </span>
           </div>
           <div>
@@ -144,7 +156,7 @@ export function VolunteerExplorer() {
             href="/admin"
             className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
           >
-            Admin Page (developmental, will be removed)
+            Admin
           </a>
           <a
             href="/messages"
@@ -158,6 +170,22 @@ export function VolunteerExplorer() {
           >
             Create Event
           </a>
+          {user ? (
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Log out ({user.name.split(" ")[0]})
+            </button>
+          ) : (
+            <a
+              href="/login"
+              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            >
+              Log in
+            </a>
+          )}
         </div>
       </header>
 
@@ -177,13 +205,6 @@ export function VolunteerExplorer() {
               placeholder="Search events…"
               aria-label="Search events by title, address, organizer, or city"
               className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
-            />
-          </div>
-
-          <div className="shrink-0 border-b border-slate-100 px-4 py-4">
-            <VolunteerLeaderboard
-              isExpanded={scoreboardExpanded}
-              onToggle={() => setScoreboardExpanded((prev) => !prev)}
             />
           </div>
 
@@ -217,24 +238,41 @@ export function VolunteerExplorer() {
                   </span>
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleJoin(selectedEvent.id)}
-                    disabled={joinLoadingId === selectedEvent.id}
-                    className={`rounded-full px-6 py-2 text-sm font-bold shadow-md transition-colors duration-200 disabled:opacity-70 ${
-                      isSelectedEventJoined
-                        ? "border border-green-300 bg-green-100 text-green-800 hover:bg-green-50"
-                        : "bg-purple-600 text-white hover:bg-purple-700"
-                    }`}
-                  >
-                    {joinLoadingId === selectedEvent.id ? (
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    ) : isSelectedEventJoined ? (
-                      "Joined ✅"
-                    ) : (
-                      "Join Event"
-                    )}
-                  </button>
+                  {isSelectedEventJoined ? (
+                    <>
+                      <span
+                        className="rounded-full border border-green-300 bg-green-100 px-6 py-2 text-sm font-bold text-green-800"
+                        aria-label="You have joined this event"
+                      >
+                        Joined ✅
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleLeave(selectedEvent.id)}
+                        disabled={joinLoadingId === selectedEvent.id}
+                        className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-70"
+                      >
+                        {joinLoadingId === selectedEvent.id ? (
+                          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                          "Leave event"
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleJoin(selectedEvent.id)}
+                      disabled={joinLoadingId === selectedEvent.id}
+                      className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70"
+                    >
+                      {joinLoadingId === selectedEvent.id ? (
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : (
+                        "Join Event"
+                      )}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleOpenTutorial}
@@ -354,6 +392,13 @@ export function VolunteerExplorer() {
                 )}
               </div>
             )}
+          </div>
+
+          <div className="shrink-0 border-t border-slate-100 px-4 py-4">
+            <VolunteerLeaderboard
+              isExpanded={scoreboardExpanded}
+              onToggle={() => setScoreboardExpanded((prev) => !prev)}
+            />
           </div>
         </section>
 
