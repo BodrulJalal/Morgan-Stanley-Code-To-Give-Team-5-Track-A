@@ -10,6 +10,14 @@ type VolunteerLeaderboardProps = {
   onToggle: () => void;
 };
 
+function getRankEmoji(rank: number): string {
+  if (rank === 1) return "🏆";
+  if (rank === 2) return "🥈";
+  if (rank === 3) return "🥉";
+  if (rank >= 4 && rank <= 10) return "🌟";
+  return "✨";
+}
+
 function getScoreEmoji(score: number, rank: number): string {
   if (rank === 1) return "🏆";
   if (rank === 2) return "🥈";
@@ -100,16 +108,27 @@ export function VolunteerLeaderboard({
               const scoreEmoji = getScoreEmoji(score, rank);
               const rankLabel =
                 rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+              const rankEmoji = getRankEmoji(rank);
+              const rankEmojiClass =
+                rank === 1
+                  ? "animate-bounce"
+                  : rank === 2 || rank === 3
+                    ? "animate-pulse"
+                    : "animate-pulse opacity-70";
               return (
                 <div
                   key={entry.id}
                   className={`flex justify-between items-center bg-white rounded-xl p-4 shadow-sm border border-slate-100 shrink-0 text-sm ${
                     isCurrentVolunteer ? "ring-2 ring-amber-300 bg-amber-50/80" : ""
-                  }`}
+                  } ${rank === 1 ? "shadow-amber-300 shadow-md" : ""}`}
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="font-bold text-slate-900">
-                      {rankLabel} {entry.name}
+                      {rankLabel}{" "}
+                      <span className={`inline-block mr-1 ${rankEmojiClass}`}>
+                        {rankEmoji}
+                      </span>
+                      {entry.name}
                       {isCurrentVolunteer ? " (You)" : ""}
                     </span>
                     <span className="text-[11px] text-slate-500">
