@@ -11,12 +11,14 @@
 
 ## 🚀 Getting Started
 1. `npm install`
-2. **Mapbox token:** Create a `.env.local` in the project root and set:
+2. **Environment:** Create a `.env.local` in the project root. Example:
    ```bash
    NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_public_token
+   NEXT_PUBLIC_API_URL=http://localhost:8000
    ```
-   Get a token from the keys channel in our discord server
-3. `npm run dev`
+   - `NEXT_PUBLIC_API_URL` is the FastAPI backend base URL (defaults to `http://localhost:8000` if unset).
+   - Get a Mapbox token from the keys channel in our discord server.
+3. Run the backend (e.g. `uvicorn main:app --reload` from `backend/`) then `npm run dev`.
 
 4. To run the backend, make sure you have the proper keys in a local env file. 
    Then follow the commands below, be in the same folder as the hidden .git dir.

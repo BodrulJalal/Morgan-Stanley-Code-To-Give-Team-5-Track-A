@@ -23,6 +23,7 @@ class EventCreate(BaseModel):
 	title: str
 	description: Optional[str] = None
 	address: str
+	city: Optional[str] = None
 	lat: float
 	long: float
 	start_time: datetime
@@ -84,21 +85,67 @@ def get_event (event_id: str):
 	)
 
 	if not result.data:
-		raise HTTPException(staus_code=404, detail="Resource (event) not found")
+		raise HTTPException(status_code=404, detail="Resource (event) not found")
 
 	return result.data
 
+def _is_rls_error(e: Exception) -> bool:
+	msg = (getattr(e, "message", None) or str(e)).lower()
+	return "row-level security" in msg or "policy" in msg or "permission" in msg or "rlspolicy" in msg
+
+
 @router.post("", status_code=201)
 def create_event(event: EventCreate):
-
-	payload = event.model_dump()
-	
+	payload = event.model_dump(exclude_none=True)
+	# DB column is "lng"; Pydantic uses "long"
+	if "long" in payload:
+		payload["lng"] = payload.pop("long")
 	payload["start_time"] = event.start_time.isoformat()
 	payload["end_time"] = event.end_time.isoformat()
 
-	result = supabase.table("events").insert(payload).execute()
+	try:
+		result = supabase.table("events").insert(payload).execute()
+	except Exception as e:
+		if _is_rls_error(e):
+			raise HTTPException(
+				status_code=403,
+				detail="Create event denied. Use the Supabase service_role key in backend/.env (Dashboard → Settings → API) so the backend can write to the database.",
+			)
+		raise HTTPException(status_code=400, detail=str(e))
 	if not result.data:
-		raise HTTPException(staus_code=500, detail="Failed to create (event)")
-
+		raise HTTPException(status_code=500, detail="Failed to create (event)")
 	return result.data[0]
+
+
+@router.post("/{event_id}/attendees", status_code=201)
+def add_attendee(event_id: str, body: AttendeeAdd):
+	row = {"event_id": event_id, "user_id": body.user_id}
+	try:
+		# Upsert so "already joined" is a no-op instead of 400
+		result = supabase.table("event_attendees").upsert(row, on_conflict="event_id, user_id").execute()
+	except Exception as e:
+		if _is_rls_error(e):
+			raise HTTPException(
+				status_code=403,
+				detail="Join event denied. Use the Supabase service_role key in backend/.env (Dashboard → Settings → API) so the backend can write to the database.",
+			)
+		raise HTTPException(status_code=400, detail=str(e))
+	# Upsert may return 0 rows if event_id/user_id are invalid (e.g. FK)
+	if not result.data:
+		raise HTTPException(status_code=400, detail="Invalid event or user id.")
+	return result.data[0] if isinstance(result.data, list) else result.data
+
+
+@router.delete("/{event_id}/attendees/{user_id}")
+def remove_attendee(event_id: str, user_id: str):
+	try:
+		supabase.table("event_attendees").delete().eq("event_id", event_id).eq("user_id", user_id).execute()
+	except Exception as e:
+		if _is_rls_error(e):
+			raise HTTPException(
+				status_code=403,
+				detail="Leave event denied. Use the Supabase service_role key in backend/.env (Dashboard → Settings → API).",
+			)
+		raise HTTPException(status_code=400, detail=str(e))
+	return {"ok": True}
 
