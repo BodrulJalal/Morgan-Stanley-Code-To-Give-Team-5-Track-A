@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { getUserProfile } from "@/lib/api";
 
 export type VolunteerScoreEntry = {
   id: string;
@@ -19,21 +21,36 @@ export type VolunteerScoreEntry = {
 
 type VolunteerProgressContextValue = {
   scoreboard: VolunteerScoreEntry[];
-  currentVolunteer: VolunteerScoreEntry;
-  currentRank: number;
+  currentVolunteer: VolunteerScoreEntry | null;
+  currentRank: number | null;
+  visibleScoreboard: VolunteerScoreEntry[];
+  isAuthenticated: boolean;
+  isProfileLoading: boolean;
   awardFlyerPosted: () => void;
   adjustEventJoin: (joined: boolean) => void;
 };
 
-const CURRENT_VOLUNTEER_ID = "vol_123";
 const STORAGE_KEY = "volunteer-progress-v1";
+const SAMPLE_VOLUNTEER_IDS = new Set([
+  "vol_maya",
+  "vol_darius",
+  "vol_ana",
+  "vol_sofia",
+  "vol_jamal",
+  "vol_nina",
+  "vol_leo",
+  "vol_zoe",
+]);
 
 const DEFAULT_SCOREBOARD: VolunteerScoreEntry[] = [
-  { id: CURRENT_VOLUNTEER_ID, name: "You", flyersPosted: 0, eventsJoined: 0 },
   { id: "vol_maya", name: "Maya", flyersPosted: 8, eventsJoined: 5 },
-  { id: "vol_darius", name: "Darius", flyersPosted: 5, eventsJoined: 6 },
-  { id: "vol_ana", name: "Ana", flyersPosted: 6, eventsJoined: 3 },
-  { id: "vol_sofia", name: "Sofia", flyersPosted: 3, eventsJoined: 4 },
+  { id: "vol_darius", name: "Darius", flyersPosted: 7, eventsJoined: 6 },
+  { id: "vol_ana", name: "Ana", flyersPosted: 6, eventsJoined: 4 },
+  { id: "vol_sofia", name: "Sofia", flyersPosted: 5, eventsJoined: 4 },
+  { id: "vol_jamal", name: "Jamal", flyersPosted: 4, eventsJoined: 5 },
+  { id: "vol_nina", name: "Nina", flyersPosted: 4, eventsJoined: 3 },
+  { id: "vol_leo", name: "Leo", flyersPosted: 3, eventsJoined: 4 },
+  { id: "vol_zoe", name: "Zoe", flyersPosted: 2, eventsJoined: 3 },
 ];
 
 const FLYER_POINTS = 15;
@@ -45,7 +62,7 @@ const VolunteerProgressContext = createContext<
 
 function sanitizeScoreboard(input: unknown): VolunteerScoreEntry[] {
   if (!Array.isArray(input)) {
-    return DEFAULT_SCOREBOARD;
+    return [];
   }
 
   const entries = input
@@ -72,14 +89,12 @@ function sanitizeScoreboard(input: unknown): VolunteerScoreEntry[] {
             : 0,
       };
     })
-    .filter((entry): entry is VolunteerScoreEntry => entry !== null);
+    .filter(
+      (entry): entry is VolunteerScoreEntry =>
+        entry !== null && !SAMPLE_VOLUNTEER_IDS.has(entry.id)
+    );
 
-  const hasCurrentVolunteer = entries.some((entry) => entry.id === CURRENT_VOLUNTEER_ID);
-  if (hasCurrentVolunteer) {
-    return entries;
-  }
-
-  return DEFAULT_SCOREBOARD;
+  return entries;
 }
 
 function scoreVolunteer(entry: VolunteerScoreEntry) {
@@ -88,18 +103,18 @@ function scoreVolunteer(entry: VolunteerScoreEntry) {
 
 function getInitialScoreboard(): VolunteerScoreEntry[] {
   if (typeof window === "undefined") {
-    return DEFAULT_SCOREBOARD;
+    return [];
   }
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return DEFAULT_SCOREBOARD;
+      return [];
     }
 
     return sanitizeScoreboard(JSON.parse(raw));
   } catch {
-    return DEFAULT_SCOREBOARD;
+    return [];
   }
 }
 
@@ -108,7 +123,11 @@ export function VolunteerProgressProvider({
 }: {
   children: ReactNode;
 }) {
-  const [scoreboard, setScoreboard] =
+  const { user, loading: authLoading } = useAuth();
+  const [profileNameByUserId, setProfileNameByUserId] = useState<
+    Record<string, string>
+  >({});
+  const [currentVolunteerStats, setCurrentVolunteerStats] =
     useState<VolunteerScoreEntry[]>(getInitialScoreboard);
 
   useEffect(() => {
@@ -117,26 +136,95 @@ export function VolunteerProgressProvider({
     }
 
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(scoreboard));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(currentVolunteerStats));
     } catch {
       // Ignore storage issues and continue with in-memory state.
     }
-  }, [scoreboard]);
+  }, [currentVolunteerStats]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user) {
+      return;
+    }
+
+    getUserProfile(user.id)
+      .then((profile) => {
+        if (cancelled) {
+          return;
+        }
+        const name = profile.display_name?.trim() || "Anonymous";
+        setProfileNameByUserId((prev) =>
+          prev[user.id] === name ? prev : { ...prev, [user.id]: name }
+        );
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProfileNameByUserId((prev) =>
+            prev[user.id] === "Anonymous"
+              ? prev
+              : { ...prev, [user.id]: "Anonymous" }
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const currentVolunteerName = user
+    ? profileNameByUserId[user.id] ?? "Anonymous"
+    : "Anonymous";
+  const isProfileLoading = !!user && profileNameByUserId[user.id] === undefined;
 
   const awardFlyerPosted = useCallback(() => {
-    setScoreboard((prev) =>
-      prev.map((entry) =>
-        entry.id === CURRENT_VOLUNTEER_ID
-          ? { ...entry, flyersPosted: entry.flyersPosted + 1 }
-          : entry
-      )
-    );
-  }, []);
+    if (!user) {
+      return;
+    }
+    setCurrentVolunteerStats((prev) => {
+      const existing = prev.find((entry) => entry.id === user.id);
+      if (existing) {
+        return prev.map((entry) =>
+          entry.id === user.id
+            ? { ...entry, flyersPosted: entry.flyersPosted + 1 }
+            : entry
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          id: user.id,
+          name: currentVolunteerName,
+          flyersPosted: 1,
+          eventsJoined: 0,
+        },
+      ];
+    });
+  }, [user, currentVolunteerName]);
 
   const adjustEventJoin = useCallback((joined: boolean) => {
-    setScoreboard((prev) =>
-      prev.map((entry) => {
-        if (entry.id !== CURRENT_VOLUNTEER_ID) {
+    if (!user) {
+      return;
+    }
+    setCurrentVolunteerStats((prev) => {
+      const existing = prev.find((entry) => entry.id === user.id);
+      if (!existing) {
+        return [
+          ...prev,
+          {
+            id: user.id,
+            name: currentVolunteerName,
+            flyersPosted: 0,
+            eventsJoined: joined ? 1 : 0,
+          },
+        ];
+      }
+
+      return prev.map((entry) => {
+        if (entry.id !== user.id) {
           return entry;
         }
 
@@ -148,13 +236,35 @@ export function VolunteerProgressProvider({
           ...entry,
           eventsJoined: nextEventsJoined,
         };
-      })
+      });
+    });
+  }, [user, currentVolunteerName]);
+
+  const mergedScoreboard = useMemo(() => {
+    if (!user) {
+      return DEFAULT_SCOREBOARD;
+    }
+
+    const existingCurrentVolunteer = currentVolunteerStats.find(
+      (entry) => entry.id === user.id
     );
-  }, []);
+
+    const currentVolunteerEntry: VolunteerScoreEntry =
+      existingCurrentVolunteer ?? {
+        id: user.id,
+        name: currentVolunteerName,
+        flyersPosted: 0,
+        eventsJoined: 0,
+      };
+
+    const otherEntries = currentVolunteerStats.filter((entry) => entry.id !== user.id);
+
+    return [...DEFAULT_SCOREBOARD, ...otherEntries, currentVolunteerEntry];
+  }, [currentVolunteerName, currentVolunteerStats, user]);
 
   const sortedScoreboard = useMemo(
     () =>
-      [...scoreboard].sort((left, right) => {
+      [...mergedScoreboard].sort((left, right) => {
         const pointDelta = scoreVolunteer(right) - scoreVolunteer(left);
         if (pointDelta !== 0) {
           return pointDelta;
@@ -167,29 +277,66 @@ export function VolunteerProgressProvider({
 
         return left.name.localeCompare(right.name);
       }),
-    [scoreboard]
+    [mergedScoreboard]
   );
 
   const currentRank = useMemo(() => {
+    if (!user) {
+      return null;
+    }
     const rankIndex = sortedScoreboard.findIndex(
-      (entry) => entry.id === CURRENT_VOLUNTEER_ID
+      (entry) => entry.id === user.id
     );
-    return rankIndex === -1 ? sortedScoreboard.length : rankIndex + 1;
-  }, [sortedScoreboard]);
+    return rankIndex === -1 ? null : rankIndex + 1;
+  }, [sortedScoreboard, user]);
 
-  const currentVolunteer =
-    sortedScoreboard.find((entry) => entry.id === CURRENT_VOLUNTEER_ID) ??
-    DEFAULT_SCOREBOARD[0];
+  const currentVolunteer = useMemo(() => {
+    if (!user) {
+      return null;
+    }
+    return (
+      sortedScoreboard.find((entry) => entry.id === user.id) ?? {
+        id: user.id,
+        name: currentVolunteerName,
+        flyersPosted: 0,
+        eventsJoined: 0,
+      }
+    );
+  }, [currentVolunteerName, sortedScoreboard, user]);
+
+  const visibleScoreboard = useMemo(() => {
+    if (!user || currentRank === null || currentRank <= 7) {
+      return sortedScoreboard.slice(0, 7);
+    }
+
+    return [
+      ...sortedScoreboard.slice(0, 7),
+      currentVolunteer ?? sortedScoreboard[7],
+    ];
+  }, [currentRank, currentVolunteer, sortedScoreboard, user]);
 
   const value = useMemo(
     () => ({
       scoreboard: sortedScoreboard,
       currentVolunteer,
       currentRank,
+      visibleScoreboard,
+      isAuthenticated: !!user,
+      isProfileLoading: authLoading || isProfileLoading,
       awardFlyerPosted,
       adjustEventJoin,
     }),
-    [sortedScoreboard, currentVolunteer, currentRank, awardFlyerPosted, adjustEventJoin]
+    [
+      sortedScoreboard,
+      currentVolunteer,
+      currentRank,
+      visibleScoreboard,
+      user,
+      authLoading,
+      isProfileLoading,
+      awardFlyerPosted,
+      adjustEventJoin,
+    ]
   );
 
   return (

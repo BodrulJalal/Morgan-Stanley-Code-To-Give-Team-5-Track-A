@@ -22,8 +22,8 @@ function EventPin({ hasSpots, isJoined }: { hasSpots: boolean; isJoined: boolean
       type="button"
       className={`flex h-10 w-10 items-center justify-center rounded-full text-lg ring-2 transition-shadow duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 focus:ring-offset-yellow-100 disabled:cursor-not-allowed disabled:opacity-60 ${
         isJoined
-          ? "bg-purple-100 border-4 border-purple-600 shadow-purple-500/50 ring-purple-300"
-          : "bg-white border-2 border-transparent shadow-md ring-yellow-400/70"
+          ? "bg-purple-100 border-2 border-purple-400 shadow-purple-300/40 ring-purple-200"
+          : "bg-white border-2 border-yellow-200 shadow-md ring-emerald-300/60"
       }`}
       aria-label={hasSpots ? "View event with open spots" : "View full event"}
     >
@@ -108,7 +108,7 @@ export function VolunteerMap({
           zoom: INITIAL_ZOOM,
         }}
         style={{ width: "100%", height: "100%", borderRadius: "1.5rem" }}
-        mapStyle="mapbox://styles/zjeon/cmmqqbavl00bk01qt0gf70lia"
+        mapStyle="mapbox://styles/mapbox/outdoors-v12"
         styleDiffing={false}
       >
         {events.map((event) => {
