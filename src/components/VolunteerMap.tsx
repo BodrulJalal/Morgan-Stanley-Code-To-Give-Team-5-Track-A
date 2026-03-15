@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import Map, { Marker, Popup, type MarkerEvent, type MapRef } from "react-map-gl/mapbox";
+import Map, {
+  Marker,
+  Popup,
+  type MarkerEvent,
+  type MapRef,
+} from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { FlyeringEvent } from "@/types/events";
 import { VolunteerAIAssistant } from "@/components/VolunteerAIAssistant";
@@ -16,7 +21,13 @@ type VolunteerMapProps = {
   currentUserId: string | null;
 };
 
-function EventPin({ hasSpots, isJoined }: { hasSpots: boolean; isJoined: boolean }) {
+function EventPin({
+  hasSpots,
+  isJoined,
+}: {
+  hasSpots: boolean;
+  isJoined: boolean;
+}) {
   return (
     <button
       type="button"
@@ -77,22 +88,27 @@ export function VolunteerMap({
       const center: [number, number] = [event.lng, event.lat];
       mapRef.current?.flyTo({ center, zoom: 13 });
     },
-    [onSelectEvent]
+    [onSelectEvent],
   );
 
   const handleClosePopup = useCallback(() => {
     onSelectEvent(null);
   }, [onSelectEvent]);
 
-  const popupEvent = events.find((event) => event.id === selectedEventId) ?? null;
+  const popupEvent =
+    events.find((event) => event.id === selectedEventId) ?? null;
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!mapboxToken) {
     return (
       <div className="flex h-full items-center justify-center rounded-3xl bg-yellow-50/80 p-8 text-center shadow-inner ring-1 ring-yellow-100">
         <p className="max-w-sm text-sm text-green-900">
-          Add <code className="rounded bg-slate-200 px-1">NEXT_PUBLIC_MAPBOX_TOKEN</code> to{" "}
-          <code className="rounded bg-slate-200 px-1">.env.local</code> to load the map.
+          Add{" "}
+          <code className="rounded bg-slate-200 px-1">
+            NEXT_PUBLIC_MAPBOX_TOKEN
+          </code>{" "}
+          to <code className="rounded bg-slate-200 px-1">.env.local</code> to
+          load the map.
         </p>
       </div>
     );
@@ -108,7 +124,7 @@ export function VolunteerMap({
           zoom: INITIAL_ZOOM,
         }}
         style={{ width: "100%", height: "100%", borderRadius: "1.5rem" }}
-        mapStyle="mapbox://styles/zjeon/cmms4j7ya009q01s11cqyaksf"
+        mapStyle="mapbox://styles/zjeon/cmms8ky1a000x01rxe2qk608w"
         styleDiffing={false}
       >
         {events.map((event) => {
