@@ -7,7 +7,9 @@ import { useAuth } from "@/context/AuthContext";
 import type { FlyeringEvent } from "@/types/events";
 import {
   getChatMessages,
+  getChatPresence,
   getUserProfile,
+  postChatPresence,
   sendChatMessage,
   type ApiChatMessageRow,
   type SendChatMessageResponse,
@@ -214,7 +216,13 @@ function formatPhotoDate(date: Date): string {
 
 // ─── MembersSidebar ───────────────────────────────────────────────────────────
 
-function MembersSidebar({ eventId }: { eventId: string }) {
+function MembersSidebar({
+  eventId,
+  onlineUserIds = [],
+}: {
+  eventId: string;
+  onlineUserIds?: string[];
+}) {
   const { events } = useEvents();
   const { user } = useAuth();
   const currentUserId = user?.id ?? null;
@@ -261,7 +269,9 @@ function MembersSidebar({ eventId }: { eventId: string }) {
               : (displayNames[attendeeId] ?? "…"),
           role:
             attendeeId === event.created_by_user_id ? "organizer" : "volunteer",
-          online: attendeeId === currentUserId,
+          online:
+            attendeeId === currentUserId ||
+            onlineUserIds.includes(attendeeId),
         }))
       : (MOCK_MEMBERS[eventId] ?? []);
 
@@ -704,6 +714,7 @@ export default function MessagesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("chat");
   const [membersSidebarOpen, setMembersSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [presenceByRoom, setPresenceByRoom] = useState<Record<string, string[]>>({});
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [photos, setPhotos] = useState<Record<string, Photo[]>>(MOCK_PHOTOS);
   const [input, setInput] = useState("");
@@ -722,6 +733,7 @@ export default function MessagesPage() {
     [activeMessages],
   );
   const activePhotos = activeEventId ? (photos[activeEventId] ?? []) : [];
+  const onlineUserIds = activeEventId ? (presenceByRoom[activeEventId] ?? []) : [];
   const activeMembers: Member[] =
     activeEvent && activeEvent.attendees.length > 0
       ? activeEvent.attendees.map((attendeeId) => ({
@@ -731,7 +743,9 @@ export default function MessagesPage() {
             attendeeId === activeEvent.created_by_user_id
               ? "organizer"
               : "volunteer",
-          online: attendeeId === currentUserId,
+          online:
+            attendeeId === currentUserId ||
+            onlineUserIds.includes(attendeeId),
         }))
       : [];
   const onlineCount = activeMembers.filter((m) => m.online).length;
@@ -758,16 +772,23 @@ export default function MessagesPage() {
       e.address.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // Fetch messages for the active room (event_id = room_id)
+  // Fetch messages and presence for the active room (event_id = room_id)
   const fetchMessages = useCallback(
     async (roomId: string) => {
       setMessagesLoading(true);
       try {
-        const { messages: raw } = await getChatMessages(roomId);
+        const [{ messages: raw }, presenceRes] = await Promise.all([
+          getChatMessages(roomId),
+          getChatPresence(roomId).catch(() => ({ user_ids: [] as string[] })),
+        ]);
         const list = raw.map((row) =>
           mapApiMessageToMessage(row, currentUserId, user?.name),
         );
         setMessages((prev) => ({ ...prev, [roomId]: list }));
+        setPresenceByRoom((prev) => ({ ...prev, [roomId]: presenceRes.user_ids }));
+        if (currentUserId) {
+          postChatPresence(roomId).catch(() => {});
+        }
       } catch {
         setMessages((prev) => ({ ...prev, [roomId]: [] }));
       } finally {
@@ -1112,7 +1133,10 @@ export default function MessagesPage() {
 
         {/* Right sidebar — members (collapsible) */}
         {activeEvent && membersSidebarOpen && (
-          <MembersSidebar eventId={activeEvent.id} />
+          <MembersSidebar
+            eventId={activeEvent.id}
+            onlineUserIds={onlineUserIds}
+          />
         )}
       </div>
     </div>

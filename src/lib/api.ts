@@ -221,3 +221,26 @@ export async function sendChatMessage(
   );
   return handleResponse<SendChatMessageResponse>(res);
 }
+
+export interface GetPresenceResponse {
+  user_ids: string[];
+}
+
+export async function getChatPresence(
+  roomId: string
+): Promise<GetPresenceResponse> {
+  const res = await fetch(
+    apiUrl(`/api/chat/${encodeURIComponent(roomId)}/presence`),
+    { method: "GET", headers: { Accept: "application/json" } }
+  );
+  return handleResponse<GetPresenceResponse>(res);
+}
+
+export async function postChatPresence(roomId: string): Promise<{ ok: boolean }> {
+  const headers = await authHeaders();
+  const res = await fetch(
+    apiUrl(`/api/chat/${encodeURIComponent(roomId)}/presence`),
+    { method: "POST", headers }
+  );
+  return handleResponse<{ ok: boolean }>(res);
+}
