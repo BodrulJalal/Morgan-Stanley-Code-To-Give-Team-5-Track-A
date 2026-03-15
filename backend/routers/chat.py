@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import dict
+from typing import Dict
 import os
 
 from auth import get_current_user_id
@@ -23,7 +23,7 @@ supabase: Client = create_client (SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 class ConnectionManager: 
 	def __init__ (self): 
-		self.rooms: dict[str, list[WebSocket]] = {}
+		self.rooms: Dict[str, list[WebSocket]] = {}
 
 	async def connect (self, room_id: str, ws: WebSocket):
 		await ws.accept()
@@ -43,4 +43,54 @@ class ConnectionManager:
 
 conn_manager = ConnectionManager()
 
-	
+
+@router.get("/{room_id}/messages")
+def get_messages (room_id: str, limit: int = 75):
+	result = (
+		supabase.table("messages")
+		.select("*, profiles(display_name)")
+		.eq("room_id", room_id)
+		.limit(limit)
+		.execute()
+	)
+
+	return {"messages": result.data}
+
+@router.websocket("/ws/{room_id}")
+async def chat (ws: WebSocket, room_id: str, user_id: str):
+
+	await conn_manager.connect(room_id, ws)
+
+	history = (
+		supabase.table("messages")
+		.select("*, profiles(display_name)")
+		.order("sent_at", desc=False)
+		.limit(50)
+		.execute()
+	)
+
+	await ws.send_json({"type": "history", "messages": history.data})
+
+	try:
+		while True:
+			data = await ws.receive_json()
+
+			# 1. Save to DB
+			result = supabase.table("messages").insert({
+				"room_id": room_id,
+				"user_id": user_id,
+				"content": data["content"]
+			}).execute()
+
+			new_message = result.data[0]
+
+			# 2. Broadcast to everyone in the room including sender
+			await manager.broadcast(room_id, {
+				"type": "message",
+				"message": new_message
+			})
+
+	except WebSocketDisconnect:
+		manager.disconnect(room_id, websocket)
+
+
