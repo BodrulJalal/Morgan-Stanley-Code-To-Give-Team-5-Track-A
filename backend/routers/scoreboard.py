@@ -22,3 +22,23 @@ supabase: Client = create_client (SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 class ScoreIncrement (BaseModel):
 	action: Literal["flyer_posted", "event_joined"]
+
+
+POINTS = {
+	"flyer_posted": 50,
+	"event_joined": 10, 
+}
+
+
+@router.get("")
+def get_leaderboard (limit: int = 10):
+	
+	result = (
+		supabase.table("scoreboard")
+		.select("*, profiles(display_name, avatar_url)")
+		.order("points", desc=True)
+		.limit(limit)
+		.execute()
+	)
+
+	return {"scoreboard": result.data}
