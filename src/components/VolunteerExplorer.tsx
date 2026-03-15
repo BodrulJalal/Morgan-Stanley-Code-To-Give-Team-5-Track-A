@@ -26,6 +26,7 @@ export function VolunteerExplorer() {
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [posterConfirmOpen, setPosterConfirmOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [showFullDetails, setShowFullDetails] = useState(false);
 
   useEffect(() => {
     refetch();
@@ -64,8 +65,13 @@ export function VolunteerExplorer() {
     !!(currentUserId && selectedEvent && isUserJoined(selectedEvent, currentUserId));
 
   const handleSelectEvent = useCallback((event: FlyeringEvent | null) => {
-    setSelectedEventId(event?.id ?? null);
+    setSelectedEventId((prev) => {
+      const nextId = event?.id ?? null;
+      if (!nextId) return null;
+      return prev === nextId ? null : nextId;
+    });
     setStatusMessage(null);
+    setShowFullDetails(false);
   }, []);
 
   const handleFlyerDownload = useCallback(async () => {
@@ -239,13 +245,9 @@ export function VolunteerExplorer() {
             />
           </div>
 
-          {/* Zone 1: Detail Stage (does not shrink) */}
-          <div className="shrink-0 border-b-2 border-slate-100 px-4 pb-4 pt-3 mb-4">
+          <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-8 pt-2">
             {loading ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-amber-50/50 py-12">
-                <span className="h-10 w-10 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" aria-hidden />
-                <p className="mt-3 text-sm font-medium text-slate-700">Loading events…</p>
-              </div>
+              <p className="py-4 text-center text-xs text-slate-500">Loading events…</p>
             ) : error ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <p className="text-sm font-medium text-amber-800" role="alert">{error}</p>
@@ -257,130 +259,6 @@ export function VolunteerExplorer() {
                   Try again
                 </button>
               </div>
-            ) : selectedEvent ? (
-              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                <h3 className="text-base font-bold leading-snug text-slate-800">
-                  {selectedEvent.title}
-                </h3>
-                <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-600">
-                  <span aria-hidden="true">People</span>
-                  <span className="font-medium">
-                    {(selectedEvent.attendees?.length ?? 0)} Volunteers Joining
-                  </span>
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {isSelectedEventJoined ? (
-                    <>
-                      <span
-                        className="rounded-full border border-green-300 bg-green-100 px-6 py-2 text-sm font-bold text-green-800"
-                        aria-label="You have joined this event"
-                      >
-                        Joined ✅
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleLeave(selectedEvent.id)}
-                        disabled={joinLoadingId === selectedEvent.id}
-                        className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-70"
-                      >
-                        {joinLoadingId === selectedEvent.id ? (
-                          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        ) : (
-                          "Leave event"
-                        )}
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleJoin(selectedEvent.id)}
-                      disabled={joinLoadingId === selectedEvent.id || !currentUserId}
-                      className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70"
-                    >
-                      {joinLoadingId === selectedEvent.id ? (
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      ) : !currentUserId ? (
-                        "Log in to join"
-                      ) : (
-                        "Join Event"
-                      )}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleOpenTutorial}
-                    disabled={flyerLoading}
-                    className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {flyerLoading ? "Generating..." : "Download Area Flyer"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleOpenTutorial}
-                    className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50"
-                  >
-                    View Instructions
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusMessage(null);
-                      setPosterConfirmOpen(true);
-                    }}
-                    className="rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-800 shadow-sm transition-colors duration-200 hover:bg-emerald-100"
-                  >
-                    Poster Added
-                  </button>
-                </div>
-                <div className="mt-4 border-t border-slate-100 pt-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    {new Date(selectedEvent.start_time).toLocaleString("en-US", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}{" "}
-                    –{" "}
-                    {new Date(selectedEvent.end_time).toLocaleString("en-US", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
-                  {selectedEvent.organizer_name ? (
-                    <p className="mt-0.5 text-xs text-slate-600">
-                      Organizer:{" "}
-                      <span className="font-medium text-slate-800">
-                        {selectedEvent.organizer_name}
-                      </span>
-                    </p>
-                  ) : null}
-                  <p className="mt-1 text-xs text-slate-600">{selectedEvent.address}</p>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-700">
-                    {selectedEvent.description}
-                  </p>
-                  {flyerError ? (
-                    <p className="mt-2 text-xs font-medium text-red-600" role="alert">
-                      {flyerError}
-                    </p>
-                  ) : null}
-                  {statusMessage ? (
-                    <p className="mt-2 text-xs font-medium text-emerald-700" role="status">
-                      {statusMessage}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border-2 border-dashed border-yellow-200 bg-amber-50 p-6 text-center">
-                <p className="text-sm font-medium text-slate-700">
-                  Select an event from the map or list to see details, join, and track
-                  your volunteer score.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-8 pt-2">
-            {loading ? (
-              <p className="py-4 text-center text-xs text-slate-500">Loading events…</p>
             ) : (
               <div className="space-y-3">
                 {filteredEvents.map((event) => {
@@ -388,62 +266,197 @@ export function VolunteerExplorer() {
                   const isJoined =
                     !!currentUserId && isUserJoined(event, currentUserId);
                   return (
-                    <button
+                    <div
                       key={event.id}
-                      type="button"
-                      onClick={() => handleSelectEvent(event)}
-                      className={`w-full rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
+                      className={`rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
                         isActive
                           ? "border-purple-500 bg-purple-50/70"
-                          : isJoined
-                            ? "border-purple-400 bg-purple-50"
-                            : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                          : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <h3
-                            className={`truncate text-sm font-semibold ${
-                              isJoined ? "text-purple-800" : "text-slate-800"
+                      <button
+                        type="button"
+                        onClick={() => handleSelectEvent(event)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h3
+                              className={`truncate text-sm font-semibold ${
+                                isActive ? "text-purple-800" : "text-slate-800"
+                              }`}
+                            >
+                              {event.title}
+                            </h3>
+                            <p
+                              className={`mt-0.5 text-xs ${
+                                isActive ? "text-purple-700" : "text-slate-500"
+                              }`}
+                            >
+                              {new Date(event.start_time).toLocaleString("en-US", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })}{" "}
+                              –{" "}
+                              {new Date(event.end_time).toLocaleString("en-US", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })}
+                            </p>
+                            <p
+                              className={`mt-0.5 line-clamp-1 text-xs ${
+                                isActive ? "text-purple-700" : "text-slate-600"
+                              }`}
+                            >
+                              {event.address}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                              isActive
+                                ? "bg-purple-100 text-purple-700"
+                                : "bg-slate-100 text-slate-600"
                             }`}
                           >
-                            {event.title}
-                          </h3>
-                          <p
-                            className={`mt-0.5 text-xs ${
-                              isJoined ? "text-purple-700" : "text-slate-500"
-                            }`}
-                          >
-                            {new Date(event.start_time).toLocaleString("en-US", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })}{" "}
-                            –{" "}
-                            {new Date(event.end_time).toLocaleString("en-US", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })}
-                          </p>
-                          <p
-                            className={`mt-0.5 line-clamp-1 text-xs ${
-                              isJoined ? "text-purple-700" : "text-slate-600"
-                            }`}
-                          >
-                            {event.address}
-                          </p>
+                            <span aria-hidden="true">👥</span>
+                            {(event.attendees?.length ?? 0)}
+                          </span>
                         </div>
-                        <span
-                          className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
-                            isJoined
-                              ? "bg-purple-100 text-purple-700"
-                              : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          <span aria-hidden="true">👥</span>
-                          {(event.attendees?.length ?? 0)}
-                        </span>
-                      </div>
-                    </button>
+                        {isJoined ? (
+                          <div className="mt-2">
+                            <span
+                              className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-gradient-to-r from-emerald-50 to-lime-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-800 shadow-sm"
+                              aria-label="You have joined this event"
+                            >
+                              <span
+                                aria-hidden="true"
+                                className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200"
+                              />
+                              Joined
+                            </span>
+                          </div>
+                        ) : null}
+                      </button>
+
+                      {isActive ? (
+                        <div className="mb-4 max-h-[45vh] shrink-0 overflow-y-auto border-b-2 border-slate-100 px-1 pb-4 pt-3 md:max-h-[38vh]">
+                          <div className="px-3 pb-2">
+                            <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
+                              <span aria-hidden="true">People</span>
+                              <span className="font-medium">
+                                {(event.attendees?.length ?? 0)} Volunteers Joining
+                              </span>
+                            </p>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              {isJoined ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleLeave(event.id)}
+                                    disabled={joinLoadingId === event.id}
+                                    className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-70"
+                                  >
+                                    {joinLoadingId === event.id ? (
+                                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    ) : (
+                                      "Leave event"
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleJoin(event.id)}
+                                  disabled={joinLoadingId === event.id || !currentUserId}
+                                  className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70"
+                                >
+                                  {joinLoadingId === event.id ? (
+                                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                  ) : !currentUserId ? (
+                                    "Log in to join"
+                                  ) : (
+                                    "Join Event"
+                                  )}
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={handleOpenTutorial}
+                                disabled={flyerLoading}
+                                className="rounded-full bg-purple-600 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {flyerLoading ? "Generating..." : "Download Area Flyer"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleOpenTutorial}
+                                className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50"
+                              >
+                                View Instructions
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setStatusMessage(null);
+                                  setPosterConfirmOpen(true);
+                                }}
+                                className="rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-800 shadow-sm transition-colors duration-200 hover:bg-emerald-100"
+                              >
+                                Poster Added
+                              </button>
+                            </div>
+                            <div className="mt-4 border-t border-slate-100 pt-3">
+                              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                {new Date(event.start_time).toLocaleString("en-US", {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                })}{" "}
+                                –{" "}
+                                {new Date(event.end_time).toLocaleString("en-US", {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                })}
+                              </p>
+                              {event.organizer_name ? (
+                                <p className="mt-0.5 text-xs text-slate-600">
+                                  Organizer:{" "}
+                                  <span className="font-medium text-slate-800">
+                                    {event.organizer_name}
+                                  </span>
+                                </p>
+                              ) : null}
+                              <p className="mt-1 text-xs text-slate-600">{event.address}</p>
+                              <p
+                                className={`mt-2 text-xs leading-relaxed text-slate-700 ${
+                                  showFullDetails ? "" : "line-clamp-3"
+                                }`}
+                              >
+                                {event.description}
+                              </p>
+                              {event.description.length > 160 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowFullDetails((prev) => !prev)}
+                                  className="mt-1 text-xs font-semibold text-purple-600 hover:underline"
+                                >
+                                  {showFullDetails ? "Show less" : "Show more"}
+                                </button>
+                              ) : null}
+                              {flyerError ? (
+                                <p className="mt-2 text-xs font-medium text-red-600" role="alert">
+                                  {flyerError}
+                                </p>
+                              ) : null}
+                              {statusMessage ? (
+                                <p className="mt-2 text-xs font-medium text-emerald-700" role="status">
+                                  {statusMessage}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                   );
                 })}
                 {filteredEvents.length === 0 && (
