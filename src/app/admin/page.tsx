@@ -89,11 +89,11 @@ export default function AdminDashboard() {
 
   const now = new Date();
   const upcomingEvents = events
-    .filter((e) => new Date(e.date) > now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .filter((e) => new Date(e.start_time) > now)
+    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
   const pastEvents = events
-    .filter((e) => new Date(e.date) <= now)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .filter((e) => new Date(e.start_time) <= now)
+    .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
   const coverageRatio =
     stats && stats.total > 0
       ? ((events.length / stats.total) * 100).toFixed(2)
@@ -214,13 +214,13 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="text-right text-xs text-slate-400">
-                    {new Date(event.date).toLocaleDateString("en-US", {
+                    {new Date(event.start_time).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
                     })}
                     <br />
-                    {new Date(event.date).toLocaleTimeString("en-US", {
+                    {new Date(event.start_time).toLocaleTimeString("en-US", {
                       hour: "numeric",
                       minute: "2-digit",
                     })}
@@ -252,7 +252,7 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="text-right text-xs text-slate-400">
-                    {new Date(event.date).toLocaleDateString("en-US", {
+                    {new Date(event.start_time).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

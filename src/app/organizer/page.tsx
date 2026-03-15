@@ -1,30 +1,68 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useCallback, useState } from "react";
-import { useEvents } from "@/context/EventsContext";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+function toDatetimeLocal(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${m}-${day}T${h}:${min}`;
+}
+
+// Placeholder until Supabase Auth is integrated; use for created_by_user_id (must be valid UUID)
+const MOCK_CREATOR_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 export default function OrganizerPage() {
-  const { addEvent } = useEvents();
   const router = useRouter();
   const [form, setForm] = useState({
     title: "",
     address: "",
     date: "",
     description: "",
+    organization: "",
   });
+  const [acknowledged, setAcknowledged] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acknowledgmentError, setAcknowledgmentError] = useState<string | null>(null);
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+  const [minDatetime, setMinDatetime] = useState("");
+  const [maxDatetime, setMaxDatetime] = useState("");
+  useEffect(() => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    setMinDatetime(toDatetimeLocal(now));
+    const maxDate = new Date(now);
+    maxDate.setFullYear(maxDate.getFullYear() + 10);
+    setMaxDatetime(toDatetimeLocal(maxDate));
+  }, []);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
       setError(null);
+      setAcknowledgmentError(null);
+
+      if (!acknowledged) {
+        setAcknowledgmentError("Please acknowledge that you will supply the materials to continue.");
+        return;
+      }
 
       if (!form.title.trim() || !form.address.trim() || !form.date.trim() || !form.description.trim()) {
-        setError("Please fill in all fields before submitting.");
+        setError("Please fill in all required fields, including description.");
+        return;
+      }
+
+      const eventDate = new Date(form.date);
+      if (eventDate <= new Date()) {
+        setError("Event date and time must be in the future.");
         return;
       }
 
@@ -50,14 +88,38 @@ export default function OrganizerPage() {
         }
         const [lng, lat] = first.center;
 
-        addEvent({
+        // Extract city from Mapbox: locality/place context or first part of place_name
+        const ctx = first.context as Array<{ id: string; text: string }> | undefined;
+        const cityPart = ctx?.find(
+          (c) => c.id.startsWith("place") || c.id.startsWith("locality")
+        );
+        const city =
+          cityPart?.text ??
+          (typeof first.place_name === "string"
+            ? first.place_name.split(",")[1]?.trim() ?? ""
+            : "");
+
+        const startTime = new Date(form.date).toISOString();
+        const endTime = new Date(
+          new Date(form.date).getTime() + 2 * 60 * 60 * 1000
+        ).toISOString();
+
+        const { error: insertError } = await supabase.from("events").insert({
           title: form.title.trim(),
           description: form.description.trim(),
           address: form.address.trim(),
-          lat,
-          lng,
-          date: form.date,
+          city: city || (form.address.trim().split(",")[0]?.trim() ?? ""),
+          lat: Number(lat),
+          lng: Number(lng),
+          start_time: startTime,
+          end_time: endTime,
+          organizer_name: form.organization.trim() || "",
+          created_by_user_id: MOCK_CREATOR_USER_ID,
         });
+
+        if (insertError) {
+          throw new Error(insertError.message);
+        }
 
         router.push("/");
       } catch (err) {
@@ -68,7 +130,7 @@ export default function OrganizerPage() {
         setIsSubmitting(false);
       }
     },
-    [form, addEvent, mapboxToken, router]
+    [form, acknowledged, mapboxToken, router]
   );
 
   return (
@@ -89,12 +151,12 @@ export default function OrganizerPage() {
             </p>
           </div>
         </div>
-        <a
+        <Link
           href="/"
           className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
         >
           Back to Explorer
-        </a>
+        </Link>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-8 md:px-6">
@@ -153,8 +215,29 @@ export default function OrganizerPage() {
                 id="date"
                 type="datetime-local"
                 value={form.date}
+                min={minDatetime || undefined}
+                max={maxDatetime || undefined}
                 onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">
+                Event must be in the future.
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor="organization"
+                className="block text-xs font-semibold uppercase tracking-wide text-slate-800"
+              >
+                Affiliated Organization (Optional)
+              </label>
+              <input
+                id="organization"
+                type="text"
+                value={form.organization}
+                onChange={(e) => setForm((f) => ({ ...f, organization: e.target.value }))}
+                placeholder="e.g. Lincoln High Eco Club, Local Food Pantry"
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/70"
               />
             </div>
             <div>
@@ -177,6 +260,28 @@ export default function OrganizerPage() {
               </p>
             </div>
 
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/50 px-3 py-3">
+              <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={acknowledged}
+                  onChange={(e) => {
+                    setAcknowledged(e.target.checked);
+                    setAcknowledgmentError(null);
+                  }}
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-purple-600 focus:ring-2 focus:ring-purple-500/70 focus:ring-offset-0"
+                />
+                <span>
+                  I acknowledge that I am responsible for printing and supplying all flyers and materials for this event.
+                </span>
+              </label>
+              {acknowledgmentError && (
+                <p className="mt-2 text-xs font-medium text-red-600" role="alert">
+                  {acknowledgmentError}
+                </p>
+              )}
+            </div>
+
             {error && (
               <p className="text-xs font-medium text-red-600" role="alert">
                 {error}
@@ -185,10 +290,10 @@ export default function OrganizerPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="mt-2 w-full rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70"
+              disabled={isSubmitting || !acknowledged}
+              className="mt-2 w-full rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-amber-50"
             >
-              {isSubmitting ? "Creating event…" : "Create event"}
+              {isSubmitting ? "Creating event…" : "Submit Event"}
             </button>
           </form>
         </div>
