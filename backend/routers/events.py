@@ -55,7 +55,7 @@ def list_events (
 ): 
 
 	query = supabase.table("events").select(
-		"*, profiles(display_name, avatar_url), event_attendees(user_id)"
+		"*, profiles!events_created_by_user_id_fkey(display_name, avatar_url), event_attendees(user_id)"
 	)
 
 	if city: 
