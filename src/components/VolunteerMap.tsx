@@ -13,20 +13,29 @@ type VolunteerMapProps = {
   events: FlyeringEvent[];
   selectedEventId: string | null;
   onSelectEvent: (event: FlyeringEvent | null) => void;
+  currentUserId: string | null;
 };
 
-function EventPin({ hasSpots }: { hasSpots: boolean }) {
+function EventPin({ hasSpots, isJoined }: { hasSpots: boolean; isJoined: boolean }) {
   return (
     <button
       type="button"
-      className="flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white bg-yellow-300 text-lg shadow-md ring-2 ring-yellow-400/70 transition-shadow duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 focus:ring-offset-yellow-100 disabled:cursor-not-allowed disabled:opacity-60"
+      className={`flex h-10 w-10 items-center justify-center rounded-full text-lg ring-2 transition-shadow duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 focus:ring-offset-yellow-100 disabled:cursor-not-allowed disabled:opacity-60 ${
+        isJoined
+          ? "bg-purple-100 border-4 border-purple-600 shadow-purple-500/50 ring-purple-300"
+          : "bg-white border-2 border-transparent shadow-md ring-yellow-400/70"
+      }`}
       aria-label={hasSpots ? "View event with open spots" : "View full event"}
     >
       <span className="relative flex items-center justify-center">
         <span
-          className={`absolute h-8 w-8 rounded-full ${
-            hasSpots ? "bg-emerald-300/40" : "bg-slate-400/30"
-          } animate-pulse`}
+          className={`absolute h-8 w-8 rounded-full animate-pulse ${
+            isJoined
+              ? "bg-purple-300/60"
+              : hasSpots
+                ? "bg-emerald-300/40"
+                : "bg-slate-400/30"
+          }`}
           aria-hidden="true"
         />
         <span className="relative text-base drop-shadow-sm" aria-hidden="true">
@@ -41,6 +50,7 @@ export function VolunteerMap({
   events,
   selectedEventId,
   onSelectEvent,
+  currentUserId,
 }: VolunteerMapProps) {
   const mapRef = useRef<MapRef | null>(null);
 
@@ -101,17 +111,23 @@ export function VolunteerMap({
         mapStyle="mapbox://styles/zjeon/cmmqqbavl00bk01qt0gf70lia"
         styleDiffing={false}
       >
-        {events.map((event) => (
-          <Marker
-            key={event.id}
-            longitude={event.lng}
-            latitude={event.lat}
-            anchor="center"
-            onClick={(e) => handleMarkerClick(e, event)}
-          >
-            <EventPin hasSpots={event.spotsRemaining > 0} />
-          </Marker>
-        ))}
+        {events.map((event) => {
+          const isJoined =
+            !!currentUserId && Array.isArray(event.attendees)
+              ? event.attendees.includes(currentUserId)
+              : false;
+          return (
+            <Marker
+              key={event.id}
+              longitude={event.lng}
+              latitude={event.lat}
+              anchor="center"
+              onClick={(e) => handleMarkerClick(e, event)}
+            >
+              <EventPin hasSpots={event.spotsRemaining > 0} isJoined={isJoined} />
+            </Marker>
+          );
+        })}
 
         {popupEvent && (
           <Popup
