@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { useEvents } from "@/context/EventsContext";
+import { createEvent, type ApiError } from "@/lib/api";
 
 function toDatetimeLocal(d: Date) {
   const y = d.getFullYear();
@@ -13,8 +14,10 @@ function toDatetimeLocal(d: Date) {
   return `${y}-${m}-${day}T${h}:${min}`;
 }
 
+// Placeholder until Supabase Auth is integrated; use for created_by_user_id (must be valid UUID)
+const MOCK_CREATOR_USER_ID = "00000000-0000-0000-0000-000000000001";
+
 export default function OrganizerPage() {
-  const { addEvent } = useEvents();
   const router = useRouter();
   const [form, setForm] = useState({
     title: "",
@@ -85,26 +88,47 @@ export default function OrganizerPage() {
         }
         const [lng, lat] = first.center;
 
-        addEvent({
+        // Extract city from Mapbox: locality/place context or first part of place_name
+        const ctx = first.context as Array<{ id: string; text: string }> | undefined;
+        const cityPart = ctx?.find(
+          (c) => c.id.startsWith("place") || c.id.startsWith("locality")
+        );
+        const city =
+          cityPart?.text ??
+          (typeof first.place_name === "string"
+            ? first.place_name.split(",")[1]?.trim() ?? ""
+            : "");
+
+        const startTime = new Date(form.date).toISOString();
+        const endTime = new Date(
+          new Date(form.date).getTime() + 2 * 60 * 60 * 1000
+        ).toISOString();
+
+        await createEvent({
           title: form.title.trim(),
-          description: form.description.trim(),
+          description: form.description.trim() || undefined,
           address: form.address.trim(),
-          lat,
-          lng,
-          date: form.date,
-          organization: form.organization.trim() || undefined,
+          city: city || undefined,
+          lat: Number(lat),
+          long: Number(lng), // backend expects "long"
+          start_time: startTime,
+          end_time: endTime,
+          organizer_name: form.organization.trim() || "",
+          created_by_user_id: MOCK_CREATOR_USER_ID,
         });
 
         router.push("/hub");
       } catch (err) {
+        const apiErr = err as ApiError;
         const message =
-          err instanceof Error ? err.message : "Address lookup failed. Please try again.";
+          apiErr?.message ??
+          (err instanceof Error ? err.message : "Something went wrong. Please try again.");
         setError(message);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [form, acknowledged, addEvent, mapboxToken, router]
+    [form, acknowledged, mapboxToken, router]
   );
 
   return (
@@ -125,12 +149,12 @@ export default function OrganizerPage() {
             </p>
           </div>
         </div>
-        <a
+        <Link
           href="/hub"
           className="rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-purple-700"
         >
           Back to Explorer
-        </a>
+        </Link>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-8 md:px-6">

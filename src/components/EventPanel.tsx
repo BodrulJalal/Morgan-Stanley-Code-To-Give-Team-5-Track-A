@@ -106,7 +106,7 @@ export function EventPanel({
         setIsGeocoding(false);
       }
     },
-    [form, initialForm, mapboxToken, onCreateEvent]
+    [form, mapboxToken, onCreateEvent]
   );
 
   return (
@@ -128,13 +128,13 @@ export function EventPanel({
                 {selectedEvent.title}
               </h3>
               <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                {new Date(selectedEvent.date).toLocaleString("en-US", {
+                {new Date(selectedEvent.start_time).toLocaleString("en-US", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}
               </p>
               <p className="mt-0.5 text-xs text-slate-600">
-                Organizer: <span className="font-medium text-slate-800">{selectedEvent.organizerName}</span>
+                Organizer: <span className="font-medium text-slate-800">{selectedEvent.organizer_name}</span>
               </p>
               <p className="mt-1 text-xs text-slate-600">
                 {selectedEvent.spotsRemaining > 0 ? (

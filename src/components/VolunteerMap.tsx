@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Map, { Marker, Popup, type MarkerEvent, type MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { FlyeringEvent } from "@/types/events";
+import { VolunteerAIAssistant } from "@/components/VolunteerAIAssistant";
 
 const NYC_CENTER = { longitude: -73.9857, latitude: 40.7484 };
 const INITIAL_ZOOM = 10;
@@ -42,12 +43,26 @@ export function VolunteerMap({
   onSelectEvent,
 }: VolunteerMapProps) {
   const mapRef = useRef<MapRef | null>(null);
-  const [popupEventId, setPopupEventId] = useState<string | null>(selectedEventId);
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      return;
+    }
+
+    const selectedEvent = events.find((event) => event.id === selectedEventId);
+    if (!selectedEvent) {
+      return;
+    }
+
+    mapRef.current?.flyTo({
+      center: [selectedEvent.lng, selectedEvent.lat],
+      zoom: 13,
+    });
+  }, [events, selectedEventId]);
 
   const handleMarkerClick = useCallback(
     (e: MarkerEvent<MouseEvent>, event: FlyeringEvent) => {
       e.originalEvent?.stopPropagation();
-      setPopupEventId(event.id);
       onSelectEvent(event);
       const center: [number, number] = [event.lng, event.lat];
       mapRef.current?.flyTo({ center, zoom: 13 });
@@ -56,11 +71,10 @@ export function VolunteerMap({
   );
 
   const handleClosePopup = useCallback(() => {
-    setPopupEventId(null);
     onSelectEvent(null);
   }, [onSelectEvent]);
 
-  const popupEvent = events.find((e) => e.id === popupEventId) ?? null;
+  const popupEvent = events.find((event) => event.id === selectedEventId) ?? null;
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!mapboxToken) {
@@ -110,27 +124,23 @@ export function VolunteerMap({
             anchor="bottom"
             className="volunteer-event-popup"
           >
-            <div className="min-w-[220px] rounded-2xl bg-white/95 p-3 shadow-md ring-1 ring-yellow-100">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-green-900">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-300 text-xs shadow">
-                  🍋
-                </span>
-                <span className="line-clamp-2">{popupEvent.title}</span>
-              </h3>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wide text-green-700/80">
-                {new Date(popupEvent.date).toLocaleString("en-US", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>
-              <p className="mt-1 line-clamp-3 text-[11px] text-slate-700">
-                {popupEvent.description}
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-green-900 line-clamp-2">
+              {popupEvent.title}
+            </h3>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-green-700/80">
+              {new Date(popupEvent.start_time).toLocaleString("en-US", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-600">{popupEvent.address}</p>
+            <p className="mt-1 line-clamp-3 text-[11px] text-slate-700">
+              {popupEvent.description}
+            </p>
           </Popup>
         )}
       </Map>
+      <VolunteerAIAssistant />
     </div>
   );
 }

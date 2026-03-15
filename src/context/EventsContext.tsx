@@ -9,158 +9,112 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  getEvents,
+  joinEvent,
+  leaveEvent,
+  type ApiEventRow,
+  type ApiError,
+} from "@/lib/api";
+import type { FlyeringEvent } from "@/types/events";
 
-export type FlyeringEvent = {
-  id: string;
-  title: string;
-  description: string;
-  address: string;
-  lat: number;
-  lng: number;
-  date: string;
-  attendees: string[];
-  organizerName: string;
-  spotsRemaining: number;
-  organization: string;
-};
+const MAX_SPOTS = 20;
+
+function mapRowToEvent(row: ApiEventRow): FlyeringEvent {
+  const attendees = (row.event_attendees ?? []).map((a) => a.user_id);
+  const lng = row.lng ?? row.long ?? 0;
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? "",
+    address: row.address,
+    city: row.city ?? "",
+    lat: row.lat,
+    lng,
+    start_time: row.start_time,
+    end_time: row.end_time,
+    organizer_name: row.organizer_name,
+    created_by_user_id: row.created_by_user_id,
+    attendees,
+    spotsRemaining: Math.max(0, MAX_SPOTS - attendees.length),
+  };
+}
 
 type EventsContextValue = {
   events: FlyeringEvent[];
-  addEvent: (
-    event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining" | "organization"> & { organization?: string }
-  ) => FlyeringEvent;
-  toggleJoin: (eventId: string, userId: string) => void;
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  toggleJoin: (eventId: string, userId: string) => Promise<void>;
 };
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "volunteer-flyering-events-v1";
-
-const INITIAL_EVENTS: FlyeringEvent[] = [
-  {
-    id: "evt-union-square",
-    title: "Union Square Subway Flyers",
-    description:
-      "Hand out Lemontree food finder flyers at Union Square. We’ll focus on commuters and nearby workers heading home.",
-    address: "14th St – Union Square, New York, NY",
-    lat: 40.7359,
-    lng: -73.9911,
-    date: "2026-03-20T17:30:00",
-    attendees: [],
-    organizerName: "Neighborhood organizer",
-    spotsRemaining: 8,
-    organization: "",
-  },
-  {
-    id: "evt-jackson-heights",
-    title: "Jackson Heights Community Walk",
-    description:
-      "Door-to-door flyering around 74th St / Roosevelt, connecting immigrant families with nearby pantries.",
-    address: "37-53 74th St, Jackson Heights, NY",
-    lat: 40.7463,
-    lng: -73.891,
-    date: "2026-03-21T11:00:00",
-    attendees: [],
-    organizerName: "Neighborhood organizer",
-    spotsRemaining: 12,
-    organization: "",
-  },
-  {
-    id: "evt-grand-concourse",
-    title: "Bronx Grand Concourse Outreach",
-    description:
-      "Table and flyer distribution near 149th St–Grand Concourse, focusing on weekend shoppers and families.",
-    address: "149th St & Grand Concourse, Bronx, NY",
-    lat: 40.8184,
-    lng: -73.927,
-    date: "2026-03-22T13:00:00",
-    attendees: [],
-    organizerName: "Neighborhood organizer",
-    spotsRemaining: 10,
-    organization: "",
-  },
-];
-
 export function EventsProvider({ children }: { children: ReactNode }) {
-  const [events, setEvents] = useState<FlyeringEvent[]>(INITIAL_EVENTS);
+  const [events, setEvents] = useState<FlyeringEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const refetch = useCallback(async () => {
+    setError(null);
+    setLoading(true);
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_EVENTS));
-        return;
-      }
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed)) {
-        const withAttendees = (parsed as Partial<FlyeringEvent>[]).map((event) => ({
-          ...event,
-          attendees: Array.isArray(event.attendees) ? event.attendees : [],
-          organizerName: event.organizerName ?? "Neighborhood organizer",
-          spotsRemaining:
-            typeof event.spotsRemaining === "number" ? event.spotsRemaining : 10,
-          organization: typeof event.organization === "string" ? event.organization : "",
-        }));
-        setEvents(withAttendees as FlyeringEvent[]);
-      }
-    } catch {
-      // ignore read errors and fall back to in-memory state
+      const { events: rows } = await getEvents({ upcoming_only: false });
+      setEvents((rows ?? []).map(mapRowToEvent));
+    } catch (err) {
+      const apiErr = err as ApiError;
+      const message =
+        apiErr?.message ?? (err instanceof Error ? err.message : "Failed to load events");
+      setError(message);
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-    } catch {
-      // ignore write errors (e.g. storage full or disabled)
+    refetch();
+  }, [refetch]);
+
+  const toggleJoin = useCallback(async (eventId: string, userId: string) => {
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return;
+    const isJoined = event.attendees.includes(userId);
+    // Never call join when already in attendees (prevent double-join)
+    if (isJoined) {
+      try {
+        await leaveEvent(eventId, userId);
+        await refetch();
+      } catch (err) {
+        const apiErr = err as ApiError;
+        setError(
+          apiErr?.message ??
+            (err instanceof Error ? err.message : "Failed to leave event")
+        );
+      }
+      return;
     }
-  }, [events]);
-
-  const addEvent = useCallback(
-    (
-      event: Omit<FlyeringEvent, "id" | "attendees" | "organizerName" | "spotsRemaining" | "organization"> & { organization?: string }
-    ): FlyeringEvent => {
-      const id = `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const newEvent: FlyeringEvent = {
-        id,
-        attendees: [],
-        organizerName: "Neighborhood organizer",
-        spotsRemaining: 10,
-        ...event,
-        organization: event.organization?.trim() ?? "",
-      };
-      setEvents((prev) => [newEvent, ...prev]);
-      return newEvent;
-    },
-    []
-  );
-
-  const toggleJoin = useCallback((eventId: string, userId: string) => {
-    setEvents((prev) =>
-      prev.map((event) => {
-        if (event.id !== eventId) return event;
-        const attendees = Array.isArray(event.attendees) ? event.attendees : [];
-        const isJoined = attendees.includes(userId);
-        const nextAttendees = isJoined
-          ? attendees.filter((id) => id !== userId)
-          : [...attendees, userId];
-        return {
-          ...event,
-          attendees: nextAttendees,
-        };
-      })
-    );
-  }, []);
+    try {
+      await joinEvent(eventId, userId);
+      await refetch();
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(
+        apiErr?.message ??
+          (err instanceof Error ? err.message : "Failed to update attendance")
+      );
+    }
+  }, [events, refetch]);
 
   const value = useMemo<EventsContextValue>(
     () => ({
       events,
-      addEvent,
+      loading,
+      error,
+      refetch,
       toggleJoin,
     }),
-    [events, addEvent, toggleJoin]
+    [events, loading, error, refetch, toggleJoin]
   );
 
   return <EventsContext.Provider value={value}>{children}</EventsContext.Provider>;
@@ -174,3 +128,4 @@ export function useEvents() {
   return ctx;
 }
 
+export type { FlyeringEvent };
