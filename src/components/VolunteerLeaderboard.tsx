@@ -107,7 +107,8 @@ export function VolunteerLeaderboard({
               const score = getVolunteerPoints(entry);
               const scoreEmoji = getScoreEmoji(score, rank);
               const rankLabel =
-                rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+                `#${rank}`;
+                // rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
               const rankEmoji = getRankEmoji(rank);
               const rankEmojiClass =
                 rank === 1
