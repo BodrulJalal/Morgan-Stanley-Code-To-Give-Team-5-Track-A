@@ -25,9 +25,13 @@ class ScoreIncrement (BaseModel):
 
 
 POINTS = {
-	"flyer_posted": 50,
+	"flyer_posted": 15,
 	"event_joined": 10, 
 }
+
+
+def _get_score_field(action: str) -> str:
+	return "flyers_posted" if action == "flyer_posted" else "events_joined"
 
 
 @router.get("")
@@ -64,7 +68,7 @@ def get_user_score (user_id: str):
 def increment_score (user_id: str, body: ScoreIncrement):
 	
 	points = POINTS[body.action]
-	field = "flyers_posted" if body.action == "flyer_posted" else "event_joined"
+	field = _get_score_field(body.action)
 
 	existing = supabase.table("scoreboard").select("*").eq("user_id", user_id).execute()
 
@@ -84,3 +88,26 @@ def increment_score (user_id: str, body: ScoreIncrement):
 		}).eq("user_id", user_id).execute()
 
 	return {"user_id": user_id, "action": body.action, "points_awarded": points}
+
+
+@router.post("/{user_id}/decrement", status_code=200)
+def decrement_score(user_id: str, body: ScoreIncrement):
+	points = POINTS[body.action]
+	field = _get_score_field(body.action)
+
+	existing = supabase.table("scoreboard").select("*").eq("user_id", user_id).execute()
+	if not existing.data:
+		return {"user_id": user_id, "action": body.action, "points_removed": 0}
+
+	current = existing.data[0]
+	next_field_value = max(0, (current.get(field) or 0) - 1)
+	current_points = current.get("points") or 0
+	next_points = max(0, current_points - points)
+
+	supabase.table("scoreboard").update({
+		field: next_field_value,
+		"points": next_points,
+		"updated_at": datetime.now(timezone.utc).isoformat()
+	}).eq("user_id", user_id).execute()
+
+	return {"user_id": user_id, "action": body.action, "points_removed": min(points, current_points)}
