@@ -4,6 +4,7 @@ import { Container, Loader, Stack, Text, Title } from "@mantine/core";
 import { ZestyAdminAssistant } from "@/components/ZestyAdminAssistant";
 import { ResourceNetworkSection } from "@/components/admin/ResourceNetworkSection";
 import { VolunteerEngagementKpisSection } from "@/components/admin/VolunteerEngagementKpisSection";
+import { WeeklyAiSummaryCard } from "@/components/admin/WeeklyAiSummaryCard";
 import { useAdminData } from "@/context/AdminDataContext";
 
 export default function AdminDashboardPage() {
@@ -31,7 +32,10 @@ export default function AdminDashboardPage() {
           {loading ? (
             <Loader size="sm" />
           ) : metrics ? (
-            <VolunteerEngagementKpisSection metrics={metrics} />
+            <>
+              <WeeklyAiSummaryCard metrics={metrics} coverageRatio={coverageRatio} />
+              <VolunteerEngagementKpisSection metrics={metrics} />
+            </>
           ) : null}
         </Stack>
       </Container>

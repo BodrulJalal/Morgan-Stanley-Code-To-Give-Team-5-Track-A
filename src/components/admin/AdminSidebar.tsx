@@ -109,7 +109,7 @@ export function AdminSidebar() {
                         leftSection={
                           <ThemeIcon
                             variant={active ? "filled" : "light"}
-                            color={active ? "blue" : "gray"}
+                            color={active ? "yellow" : "gray"}
                           >
                             <item.icon size={14} />
                           </ThemeIcon>

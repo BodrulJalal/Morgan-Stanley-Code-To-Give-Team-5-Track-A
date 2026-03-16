@@ -6,7 +6,14 @@ import type {
 
 export const RECENT_WEEK_COUNT = 12;
 export const TREND_WINDOW_WEEKS = 4;
-export const PIE_COLORS = ["#7C3AED", "#A855F7", "#E879F9", "#F59E0B", "#38BDF8", "#34D399"];
+export const PIE_COLORS = [
+  "var(--mantine-color-blue-6)",
+  "var(--mantine-color-blue-5)",
+  "var(--mantine-color-blue-4)",
+  "var(--mantine-color-yellow-6)",
+  "var(--mantine-color-yellow-5)",
+  "var(--mantine-color-teal-5)",
+];
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);

@@ -78,8 +78,13 @@ export function ParticipationDistributionSection({
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="firstTimeCount" stackId="a" name="First-time" fill="#38BDF8" />
-                  <Bar dataKey="returningCount" stackId="a" name="Returning" fill="#7C3AED" />
+                  <Bar dataKey="firstTimeCount" stackId="a" name="First-time" fill="#F59E0B" />
+                  <Bar
+                    dataKey="returningCount"
+                    stackId="a"
+                    name="Returning"
+                    fill="var(--mantine-color-blue-6)"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </Box>

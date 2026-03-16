@@ -94,7 +94,8 @@ export function EngagementHeatmapAndRecurringSection({
                       const future = date > today;
                       const key = isoDate(date);
                       const value = attendanceByDate.get(key) ?? 0;
-                      const alpha = future ? 0 : Math.max(0.08, value / maxDailyAttendance);
+                      const normalized = maxDailyAttendance > 0 ? value / maxDailyAttendance : 0;
+                      const alpha = future ? 0 : Math.max(0.08, Math.pow(normalized, 0.65));
 
                       return (
                         <Box
@@ -107,7 +108,7 @@ export function EngagementHeatmapAndRecurringSection({
                             border: "1px solid var(--mantine-color-gray-2)",
                             backgroundColor: future
                               ? "var(--mantine-color-gray-1)"
-                              : `rgba(124, 58, 237, ${alpha})`,
+                              : `rgba(202, 138, 4, ${alpha})`,
                           }}
                         />
                       );

@@ -13,7 +13,7 @@ load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") 
 
-if not (SUPABASE_URL or SUPABASE_SERVICE_KEY):
+if not (SUPABASE_URL and SUPABASE_SERVICE_KEY):
 	raise RuntimeError ("Missing Supbase URL or Service Key in .env file")
 
 supabase: Client = create_client (SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -50,7 +50,7 @@ def seed_users (count: int) -> list[str]:
 	return user_ids
 
 
-def seed_events (user_ids: list[str], count: int) -> list[str]:
+def seed_events (user_ids: list[str], count: int, history_weeks: int, future_days: int) -> list[str]:
 	print(f"Creating {count} fake (realistic) events")
 	locations, event_ids = nyc, []
 
@@ -60,9 +60,15 @@ def seed_events (user_ids: list[str], count: int) -> list[str]:
 		lat = base_lat + random.uniform(-0.005, 0.005)
 		long = base_long + random.uniform(-0.005, 0.005)
 
+		# Bias event timing toward historical data so weekly engagement charts
+		# have meaningful variation in recent weeks.
+		if random.random() < 0.75:
+			day_offset = -random.randint(0, history_weeks * 7)
+		else:
+			day_offset = random.randint(0, future_days)
 		start_dt = datetime.now(timezone.utc) + timedelta(
-			days = random.randint(0, 30),
-			hours = random.randint(8, 18),
+			days = day_offset,
+			hours = random.randint(8, 20),
 		)
 
 		end_dt = start_dt + timedelta (hours = random.randint(1, 4))
@@ -109,11 +115,23 @@ def main ():
 	parser = argparse.ArgumentParser(description="Seed the Lemontree DB")
 	parser.add_argument("--users", type=int, default=5, help="Number of fake users to create")
 	parser.add_argument("--events", type=int, default=12, help="Number of fake events to create")
+	parser.add_argument(
+		"--history-weeks",
+		type=int,
+		default=12,
+		help="How many weeks of historical events to generate",
+	)
+	parser.add_argument(
+		"--future-days",
+		type=int,
+		default=21,
+		help="How many future days to include in generated events",
+	)
 	args = parser.parse_args()
 
 	print("Seeding database...")
 	user_ids = seed_users(args.users)
-	event_ids = seed_events(user_ids, args.events)
+	event_ids = seed_events(user_ids, args.events, args.history_weeks, args.future_days)
 	seed_attendees(user_ids, event_ids)
 	print("Hopefully it worked ...")
 

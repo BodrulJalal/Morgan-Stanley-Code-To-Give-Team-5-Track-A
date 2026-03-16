@@ -39,14 +39,6 @@ function AdminSidebar() {
           })}
         </nav>
       </div>
-      <div className="mt-auto px-4 pb-5">
-        <Link
-          href="/hub"
-          className="block px-3 py-2 rounded-xl text-[13px] font-medium text-gray-500 hover:bg-white/70 hover:text-gray-900 transition-colors"
-        >
-          ← Back to Explorer
-        </Link>
-      </div>
     </aside>
   );
 }

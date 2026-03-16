@@ -166,6 +166,57 @@ export async function leaveEvent(eventId: string): Promise<{ ok: boolean }> {
   return handleResponse<{ ok: boolean }>(res);
 }
 
+export interface WeeklySummaryTopOrganization {
+  organizer: string;
+  attendance: number;
+  events: number;
+}
+
+export interface WeeklyEngagementSummaryStats {
+  week_start_iso: string;
+  week_end_iso: string;
+  current_week_engagement: number;
+  current_week_unique_volunteers: number;
+  current_week_events: number;
+  current_week_first_time: number;
+  current_week_returning: number;
+  total_engagement: number;
+  unique_volunteers_total: number;
+  upcoming_events: number;
+  past_events: number;
+  recurring_volunteers: number;
+  one_time_volunteers: number;
+  avg_participation_per_week: number;
+  weekly_growth_rate: number;
+  trend_direction: "increasing" | "decreasing" | "flat";
+  network_coverage_ratio?: string | null;
+  top_organizations: WeeklySummaryTopOrganization[];
+}
+
+export interface WeeklyEngagementSummaryResponse {
+  summary: string;
+  week_key: string;
+  last_updated: string;
+  cached: boolean;
+  stale: boolean;
+  stats_hash_match: boolean;
+  error?: string;
+}
+
+export async function getWeeklyEngagementSummary(
+  stats: WeeklyEngagementSummaryStats
+): Promise<WeeklyEngagementSummaryResponse> {
+  const res = await fetch(apiUrl("/api/zesty/weekly-summary"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ stats }),
+  });
+  return handleResponse<WeeklyEngagementSummaryResponse>(res);
+}
+
 export interface ApiScoreboardRow {
   user_id: string;
   points: number;

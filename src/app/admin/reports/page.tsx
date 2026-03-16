@@ -13,7 +13,7 @@ import {
 } from "@mantine/core";
 import { IconDownload } from "@tabler/icons-react";
 import { jsPDF } from "jspdf";
-import { mockWeeklyReports } from "@/components/data/adminMockData";
+import { mockAdminMetrics, mockCoverageRatio, mockWeeklyReports } from "@/components/data/adminMockData";
 
 function exportWeeklyReportPdf(index: number) {
   const row = mockWeeklyReports[index];
@@ -30,16 +30,42 @@ function exportWeeklyReportPdf(index: number) {
     38
   );
 
-  const lines = [
+  const weeklyLines = [
     `Total attendance: ${row.totalAttendance}`,
     `Unique volunteers: ${row.uniqueVolunteers}`,
     `Total events: ${row.totalEvents}`,
     `Recurring share: ${row.recurringSharePct}%`,
     `Top organization: ${row.topOrganization}`,
   ];
+  const engagementLines = [
+    `All-time attendance: ${mockAdminMetrics.totalAttendance.toLocaleString()}`,
+    `All-time unique volunteers: ${mockAdminMetrics.uniqueVolunteersCount.toLocaleString()}`,
+    `Recurring volunteers: ${mockAdminMetrics.recurringVolunteers.toLocaleString()}`,
+    `One-time volunteers: ${mockAdminMetrics.oneTimeVolunteers.toLocaleString()}`,
+    `Avg participation/week: ${mockAdminMetrics.avgParticipationPerWeek.toFixed(1)}`,
+    `Trend (last 4w): ${mockAdminMetrics.attendanceDeltaPct >= 0 ? "+" : ""}${mockAdminMetrics.attendanceDeltaPct.toFixed(1)}% (${mockAdminMetrics.trendDirection})`,
+    `Past vs upcoming events: ${mockAdminMetrics.pastEvents.length} / ${mockAdminMetrics.upcomingEvents.length}`,
+    `Network coverage: ${mockCoverageRatio != null ? `${mockCoverageRatio}%` : "N/A"}`,
+  ];
 
   let y = 52;
-  for (const line of lines) {
+  pdf.setFontSize(12);
+  pdf.text("Weekly Snapshot", 14, y);
+  y += 8;
+
+  pdf.setFontSize(11);
+  for (const line of weeklyLines) {
+    pdf.text(line, 14, y);
+    y += 8;
+  }
+
+  y += 4;
+  pdf.setFontSize(12);
+  pdf.text("Volunteer Engagement Stats", 14, y);
+  y += 8;
+
+  pdf.setFontSize(11);
+  for (const line of engagementLines) {
     pdf.text(line, 14, y);
     y += 8;
   }
@@ -67,9 +93,16 @@ export default function AdminReportsPage() {
               <Button
                 size="xs"
                 radius="md"
-                color="orange"
+                color="yellow"
                 leftSection={<IconDownload size={14} />}
                 onClick={() => exportWeeklyReportPdf(0)}
+                styles={{
+                  root: {
+                    WebkitTapHighlightColor: "transparent",
+                    transition: "background-color 120ms ease, color 120ms ease",
+                    "&:active": { transform: "none" },
+                  },
+                }}
               >
                 Export PDF
               </Button>
@@ -129,9 +162,16 @@ export default function AdminReportsPage() {
                   <Table.Td>
                     <Button
                       size="compact-xs"
-                      variant="light"
+                      color="yellow"
                       leftSection={<IconDownload size={12} />}
                       onClick={() => exportWeeklyReportPdf(idx)}
+                      styles={{
+                        root: {
+                          WebkitTapHighlightColor: "transparent",
+                          transition: "background-color 120ms ease, color 120ms ease",
+                          "&:active": { transform: "none" },
+                        },
+                      }}
                     >
                       Export PDF
                     </Button>

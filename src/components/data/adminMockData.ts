@@ -45,11 +45,11 @@ function makeEvent(
   };
 }
 
-const TOTAL_UNIQUE_VOLUNTEERS = 350;
-const RECURRING_VOLUNTEERS = 289;
+const TOTAL_UNIQUE_VOLUNTEERS = 920;
+const RECURRING_VOLUNTEERS = 740;
 const ONE_TIME_VOLUNTEERS = TOTAL_UNIQUE_VOLUNTEERS - RECURRING_VOLUNTEERS;
-const PAST_EVENT_COUNT = 900;
-const UPCOMING_EVENT_COUNT = 60;
+const PAST_EVENT_COUNT = 1800;
+const UPCOMING_EVENT_COUNT = 220;
 const ORGANIZERS = [
   "Harlem Food Coalition",
   "Bronx Mutual Aid",
@@ -115,7 +115,9 @@ function eventStartHour(index: number): number {
 
 const pastEvents = Array.from({ length: PAST_EVENT_COUNT }, (_, i) => {
   const meta = generatedEventMeta(i);
-  const baseAttendance = 9 + (i % 15); // 9..23 recurring attendees
+  const burstBoost = i % 29 === 0 ? 6 : i % 11 === 0 ? 3 : 0;
+  const dipPenalty = i % 13 === 0 ? 3 : 0;
+  const baseAttendance = Math.max(5, Math.min(20, 8 + (i % 12) + burstBoost - dipPenalty));
   const attendees = rotatingRecurring(i * 5, baseAttendance);
   if (i < oneTimePool.length && i % 3 !== 0) {
     attendees.push(oneTimePool[i]);
@@ -137,7 +139,8 @@ const pastEvents = Array.from({ length: PAST_EVENT_COUNT }, (_, i) => {
 
 const upcomingEvents = Array.from({ length: UPCOMING_EVENT_COUNT }, (_, i) => {
   const meta = generatedEventMeta(PAST_EVENT_COUNT + i);
-  const plannedAttendance = 8 + ((i * 3) % 12); // 8..19
+  const burstBoost = i % 10 === 0 ? 4 : 0;
+  const plannedAttendance = Math.max(6, Math.min(20, 7 + ((i * 3) % 11) + burstBoost));
   return makeEvent(
     `evt_upcoming_${String(i + 1).padStart(3, "0")}`,
     meta.title,
@@ -250,7 +253,7 @@ export const mockContacts: VolunteerContact[] = (() => {
     }
   }
 
-  return [...attendanceCount.entries()]
+  const generatedFromAttendance = [...attendanceCount.entries()]
     .map(([id, totalEventsAttended], idx) => {
       const derivedLastDate = lastAttended.get(id) ?? new Date().toISOString();
       const lastDate = syntheticLastAttendedDate(idx, derivedLastDate);
@@ -267,6 +270,38 @@ export const mockContacts: VolunteerContact[] = (() => {
       };
     })
     .sort((a, b) => b.totalEventsAttended - a.totalEventsAttended);
+
+  const neighborhoods = [
+    "Harlem",
+    "Bronx",
+    "Queens",
+    "Brooklyn",
+    "Midtown",
+    "Lower East Side",
+    "Upper West Side",
+    "Astoria",
+    "Bushwick",
+    "Sunset Park",
+  ];
+  const extraDummyContacts: VolunteerContact[] = Array.from({ length: 100 }, (_, idx) => {
+    const id = `dummy_contact_${String(idx + 1).padStart(3, "0")}`;
+    const recentDate = syntheticLastAttendedDate(idx + 500, new Date().toISOString());
+    const daysAgo = Math.floor((Date.now() - new Date(recentDate).getTime()) / 86400000);
+    return {
+      id,
+      name: contactNameForUser(`u_${String(idx + 501).padStart(3, "0")}`),
+      email: `${id}@lemontree-volunteers.org`,
+      phone: `+1 (555) 99${String(idx).padStart(2, "0")}`,
+      neighborhood: neighborhoods[idx % neighborhoods.length],
+      totalEventsAttended: 1 + (idx % 6),
+      lastAttendedDate: recentDate,
+      status: statusFromDaysAgo(daysAgo),
+    };
+  });
+
+  return [...generatedFromAttendance, ...extraDummyContacts].sort(
+    (a, b) => b.totalEventsAttended - a.totalEventsAttended
+  );
 })();
 
 export const mockWeeklyReports: WeeklyReportSummary[] = (() => {
@@ -274,7 +309,7 @@ export const mockWeeklyReports: WeeklyReportSummary[] = (() => {
     (w) => w.eventCount > 0 || w.attendanceCount > 0
   );
 
-  const result: WeeklyReportSummary[] = buckets.slice(-8).map((week) => {
+  const result: WeeklyReportSummary[] = buckets.slice(-16).map((week) => {
     const weekStart = new Date(week.weekKey);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 6);
