@@ -3,8 +3,12 @@
 import { Box, Card, Grid, Text, Title } from "@mantine/core";
 import { Fragment } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { PIE_COLORS } from "@/components/admin/engagementMetrics";
 import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
+
+const RECURRING_PIE_COLORS = [
+  "var(--mantine-color-yellow-6)",
+  "var(--mantine-color-blue-6)",
+];
 
 type EngagementHeatmapAndRecurringSectionProps = {
   metrics: AdminEngagementMetrics;
@@ -139,19 +143,19 @@ export function EngagementHeatmapAndRecurringSection({
               No attendee data yet.
             </Text>
           ) : (
-            <Box mt="md" h={288}>
+            <Box mt="md" h={180}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={metrics.recurringBreakdown}
                     dataKey="value"
                     nameKey="label"
-                    innerRadius={70}
-                    outerRadius={100}
+                    innerRadius={40}
+                    outerRadius={60}
                     paddingAngle={3}
                   >
                     {metrics.recurringBreakdown.map((_, index) => (
-                      <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      <Cell key={index} fill={RECURRING_PIE_COLORS[index % RECURRING_PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />

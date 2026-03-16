@@ -46,7 +46,7 @@ export function VolunteerLeaderboard({
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-700">
             Leaderboard
           </p>
-          <p className="text-3xl font-black leading-none text-slate-900">
+          <p className="text-xl font-black leading-none text-slate-900">
             {isAuthenticated && currentRank !== null ? `#${currentRank}` : "--"}
           </p>
           <div className="mt-1 text-[11px] text-slate-600">
@@ -78,7 +78,7 @@ export function VolunteerLeaderboard({
             <p className="text-[10px] uppercase tracking-[0.2em] text-white/80">
               Total points
             </p>
-            <p className="text-right text-lg font-bold">
+            <p className="text-right text-base font-bold">
               {isAuthenticated && currentVolunteer
                 ? getVolunteerPoints(currentVolunteer)
                 : "--"}
@@ -89,7 +89,7 @@ export function VolunteerLeaderboard({
 
       {isExpanded ? (
         <div className="mt-4 flex w-full flex-col gap-3 border-t-2 border-slate-200 pt-4">
-          <div className="mb-2 flex w-full justify-between px-4 text-sm font-bold uppercase tracking-wider text-slate-500">
+          <div className="mb-2 flex w-full justify-between px-4 text-xs font-bold uppercase tracking-wider text-slate-500">
             <span>Rank &amp; Volunteer</span>
             <span>Score</span>
           </div>
@@ -110,7 +110,7 @@ export function VolunteerLeaderboard({
               return (
                 <div
                   key={entry.id}
-                  className={`shrink-0 rounded-xl border border-slate-100 bg-white p-4 text-sm shadow-sm ${
+                  className={`shrink-0 rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-sm ${
                     isCurrentVolunteer ? "bg-amber-50/80 ring-2 ring-amber-300" : ""
                   } ${rank === 1 ? "shadow-md shadow-amber-300" : ""}`}
                 >
@@ -124,7 +124,7 @@ export function VolunteerLeaderboard({
                         {entry.flyersPosted} flyers · {entry.eventsJoined} events
                       </span>
                     </div>
-                    <span className="text-lg font-bold text-slate-800">
+                    <span className="text-sm font-bold text-slate-800">
                       {score}
                       <span className={scoreEmojiClass}>{scoreEmoji}</span>
                     </span>

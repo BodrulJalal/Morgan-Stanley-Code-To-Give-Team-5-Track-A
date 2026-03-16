@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Badge, Card, Group, Loader, Stack, Text, Title } from "@mantine/core";
+import { Alert, Card, Group, Loader, Stack, Text, Title } from "@mantine/core";
 import { getWeeklyEngagementSummary } from "@/lib/api";
 import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
 
@@ -99,9 +99,6 @@ export function WeeklyAiSummaryCard({ metrics, coverageRatio }: WeeklyAiSummaryC
         <Title order={5} fz="xs" tt="uppercase" c="dimmed">
           AI Weekly Summary
         </Title>
-        <Badge color="blue" variant="light">
-          Weekly
-        </Badge>
       </Group>
 
       {loading ? (

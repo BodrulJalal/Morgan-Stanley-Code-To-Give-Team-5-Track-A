@@ -176,10 +176,10 @@ export function VolunteerExplorer() {
             <img src="/lemontree-logo.svg" alt="Lemontree logo" className="h-7 w-7 object-contain" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
+            <h1 className="text-base font-extrabold tracking-tight text-slate-800">
               Volunteer Flyering Hub
             </h1>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-800/80">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-800/80">
               Explore events · Download flyers
             </p>
           </div>
@@ -187,19 +187,19 @@ export function VolunteerExplorer() {
         <div className="flex items-center gap-2">
           <a
             href="/admin"
-            className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+            className="rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
           >
             Admin
           </a>
           <a
             href="/messages"
-            className="rounded-full bg-primary-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600"
+            className="rounded-full bg-primary-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600"
           >
             Messages
           </a>
           <a
             href="/organizer"
-            className="rounded-full bg-primary-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600"
+            className="rounded-full bg-primary-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600"
           >
             Create Event
           </a>
@@ -207,14 +207,14 @@ export function VolunteerExplorer() {
             <button
               type="button"
               onClick={logout}
-              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+              className="rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
             >
               Log out
             </button>
           ) : (
             <a
               href="/login"
-              className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
+              className="rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
             >
               Log in
             </a>
@@ -227,10 +227,10 @@ export function VolunteerExplorer() {
           <div className="flex shrink-0 flex-col border-b border-slate-100 px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-slate-800">
+                <h2 className="text-xs font-semibold text-slate-800">
                   Upcoming flyering events
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-[11px] text-slate-500">
                   Tap a map marker or event card to see details.
                 </p>
               </div>
@@ -252,20 +252,20 @@ export function VolunteerExplorer() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search events…"
               aria-label="Search events by title, address, organizer, or city"
-              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
+              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/70"
             />
           </div>
 
           <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-8 pt-2">
             {loading ? (
-              <p className="py-4 text-center text-xs text-slate-500">Loading events…</p>
+              <p className="py-4 text-center text-[11px] text-slate-500">Loading events…</p>
             ) : error ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                <p className="text-sm font-medium text-amber-800" role="alert">{error}</p>
+                <p className="text-xs font-medium text-amber-800" role="alert">{error}</p>
                 <button
                   type="button"
                   onClick={() => refetch()}
-                  className="mt-2 text-xs font-semibold text-primary-500 hover:underline"
+                  className="mt-2 text-[11px] font-semibold text-primary-500 hover:underline"
                 >
                   Try again
                 </button>
@@ -282,7 +282,7 @@ export function VolunteerExplorer() {
                       ref={(el) => {
                         eventCardRefs.current[event.id] = el;
                       }}
-                      className={`rounded-2xl border px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-150 ${
+                      className={`rounded-2xl border px-3 py-2.5 text-left text-xs shadow-sm transition-colors duration-150 ${
                         isActive
                           ? "border-primary-500 bg-primary-50/70"
                           : "border-slate-100 bg-white hover:border-primary-200 hover:bg-primary-50/40"
@@ -296,14 +296,14 @@ export function VolunteerExplorer() {
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <h3
-                              className={`truncate text-sm font-semibold ${
+                              className={`truncate text-xs font-semibold ${
                                 isActive ? "text-primary-800" : "text-slate-800"
                               }`}
                             >
                               {event.title}
                             </h3>
                             <p
-                              className={`mt-0.5 text-xs ${
+                              className={`mt-0.5 text-[11px] ${
                                 isActive ? "text-primary-600" : "text-slate-500"
                               }`}
                             >
@@ -318,7 +318,7 @@ export function VolunteerExplorer() {
                               })}
                             </p>
                             <p
-                              className={`mt-0.5 line-clamp-1 text-xs ${
+                              className={`mt-0.5 line-clamp-1 text-[11px] ${
                                 isActive ? "text-primary-600" : "text-slate-600"
                               }`}
                             >
@@ -326,7 +326,7 @@ export function VolunteerExplorer() {
                             </p>
                           </div>
                           <span
-                            className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                            className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium ${
                               isActive
                                 ? "bg-primary-100 text-primary-600"
                                 : "bg-slate-100 text-slate-600"
@@ -355,7 +355,7 @@ export function VolunteerExplorer() {
                       {isActive ? (
                         <div className="mb-4 max-h-[45vh] shrink-0 overflow-y-auto border-b-2 border-slate-100 px-1 pb-4 pt-3 md:max-h-[38vh]">
                           <div className="px-3 pb-2">
-                            <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
+                            <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-600">
                               <span aria-hidden="true">People</span>
                               <span className="font-medium">
                                 {(event.attendees?.length ?? 0)} Volunteers Joining
@@ -368,7 +368,7 @@ export function VolunteerExplorer() {
                                     type="button"
                                     onClick={() => handleLeave(event.id)}
                                     disabled={joinLoadingId === event.id}
-                                    className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-70"
+                                    className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-70"
                                   >
                                     {joinLoadingId === event.id ? (
                                       <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -382,7 +382,7 @@ export function VolunteerExplorer() {
                                   type="button"
                                   onClick={() => handleJoin(event.id)}
                                   disabled={joinLoadingId === event.id || !currentUserId}
-                                  className="rounded-full bg-primary-500 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:opacity-70"
+                                  className="rounded-full bg-primary-500 px-4 py-1.5 text-xs font-bold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:opacity-70"
                                 >
                                   {joinLoadingId === event.id ? (
                                     <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -397,14 +397,14 @@ export function VolunteerExplorer() {
                                 type="button"
                                 onClick={handleOpenTutorial}
                                 disabled={flyerLoading}
-                                className="rounded-full bg-primary-500 px-6 py-2 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-full bg-primary-500 px-4 py-1.5 text-xs font-bold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {flyerLoading ? "Generating..." : "Download Area Flyer"}
                               </button>
                               <button
                                 type="button"
                                 onClick={handleOpenTutorial}
-                                className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50"
+                                className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50"
                               >
                                 View Instructions
                               </button>
@@ -415,14 +415,14 @@ export function VolunteerExplorer() {
                                     setStatusMessage(null);
                                     setPosterConfirmOpen(true);
                                   }}
-                                  className="rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-800 shadow-sm transition-colors duration-200 hover:bg-emerald-100"
+                                  className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm transition-colors duration-200 hover:bg-emerald-100"
                                 >
                                   Poster Added
                                 </button>
                               ) : null}
                             </div>
                             <div className="mt-4 border-t border-slate-100 pt-3">
-                              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
                                 {new Date(event.start_time).toLocaleString("en-US", {
                                   dateStyle: "medium",
                                   timeStyle: "short",
@@ -434,16 +434,16 @@ export function VolunteerExplorer() {
                                 })}
                               </p>
                               {event.organizer_name ? (
-                                <p className="mt-0.5 text-xs text-slate-600">
+                                <p className="mt-0.5 text-[11px] text-slate-600">
                                   Organizer:{" "}
                                   <span className="font-medium text-slate-800">
                                     {event.organizer_name}
                                   </span>
                                 </p>
                               ) : null}
-                              <p className="mt-1 text-xs text-slate-600">{event.address}</p>
+                              <p className="mt-1 text-[11px] text-slate-600">{event.address}</p>
                               <p
-                                className={`mt-2 text-xs leading-relaxed text-slate-700 ${
+                                className={`mt-2 text-[11px] leading-relaxed text-slate-700 ${
                                   showFullDetails ? "" : "line-clamp-3"
                                 }`}
                               >
@@ -453,18 +453,18 @@ export function VolunteerExplorer() {
                                 <button
                                   type="button"
                                   onClick={() => setShowFullDetails((prev) => !prev)}
-                                  className="mt-1 text-xs font-semibold text-primary-500 hover:underline"
+                                  className="mt-1 text-[11px] font-semibold text-primary-500 hover:underline"
                                 >
                                   {showFullDetails ? "Show less" : "Show more"}
                                 </button>
                               ) : null}
                               {flyerError ? (
-                                <p className="mt-2 text-xs font-medium text-red-600" role="alert">
+                                <p className="mt-2 text-[11px] font-medium text-red-600" role="alert">
                                   {flyerError}
                                 </p>
                               ) : null}
                               {statusMessage ? (
-                                <p className="mt-2 text-xs font-medium text-emerald-700" role="status">
+                                <p className="mt-2 text-[11px] font-medium text-emerald-700" role="status">
                                   {statusMessage}
                                 </p>
                               ) : null}
@@ -476,7 +476,7 @@ export function VolunteerExplorer() {
                   );
                 })}
                 {filteredEvents.length === 0 && (
-                  <p className="py-4 text-center text-xs text-slate-500">
+                  <p className="py-4 text-center text-[11px] text-slate-500">
                     {showOnlyJoined
                       ? "You haven't joined any events yet! Turn off this filter to explore upcoming flyering campaigns."
                       : events.length === 0
