@@ -166,6 +166,63 @@ export async function leaveEvent(eventId: string): Promise<{ ok: boolean }> {
   return handleResponse<{ ok: boolean }>(res);
 }
 
+export interface ApiScoreboardRow {
+  user_id: string;
+  points: number;
+  flyers_posted?: number | null;
+  events_joined?: number | null;
+  event_joined?: number | null;
+  updated_at?: string | null;
+  profiles?: {
+    display_name?: string | null;
+    avatar_url?: string | null;
+  } | null;
+}
+
+export interface GetScoreboardResponse {
+  scoreboard: ApiScoreboardRow[];
+}
+
+export async function getScoreboard(limit = 100): Promise<GetScoreboardResponse> {
+  const url = new URL(apiUrl("/api/scoreboard"));
+  url.searchParams.set("limit", String(limit));
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  return handleResponse<GetScoreboardResponse>(res);
+}
+
+export async function incrementScore(
+  userId: string,
+  action: "flyer_posted" | "event_joined"
+): Promise<{ user_id: string; action: string; points_awarded: number }> {
+  const res = await fetch(apiUrl(`/api/scoreboard/${encodeURIComponent(userId)}/increment`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ action }),
+  });
+  return handleResponse<{ user_id: string; action: string; points_awarded: number }>(res);
+}
+
+export async function decrementScore(
+  userId: string,
+  action: "flyer_posted" | "event_joined"
+): Promise<{ user_id: string; action: string; points_removed: number }> {
+  const res = await fetch(apiUrl(`/api/scoreboard/${encodeURIComponent(userId)}/decrement`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ action }),
+  });
+  return handleResponse<{ user_id: string; action: string; points_removed: number }>(res);
+}
+
 // ─── Chat (room_id = event_id) ───────────────────────────────────────────────
 
 /** Raw message row from GET /api/chat/{room_id}/messages */

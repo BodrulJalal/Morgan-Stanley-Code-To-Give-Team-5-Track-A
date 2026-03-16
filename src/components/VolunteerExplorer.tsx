@@ -163,7 +163,7 @@ export function VolunteerExplorer() {
       setJoinLoadingId(eventId);
       try {
         await toggleJoin(eventId);
-        adjustEventJoin(true);
+        await adjustEventJoin(true);
         setStatusMessage("You joined the event and earned event points.");
       } finally {
         setJoinLoadingId(null);
@@ -180,8 +180,8 @@ export function VolunteerExplorer() {
       setJoinLoadingId(eventId);
       try {
         await toggleJoin(eventId);
-        adjustEventJoin(false);
-        setStatusMessage("You left the event and your event points were updated.");
+        await adjustEventJoin(false);
+        setStatusMessage("You left the event.");
       } finally {
         setJoinLoadingId(null);
       }
@@ -189,8 +189,8 @@ export function VolunteerExplorer() {
     [events, toggleJoin, currentUserId, adjustEventJoin]
   );
 
-  const handleConfirmPosterAdded = useCallback(() => {
-    awardFlyerPosted();
+  const handleConfirmPosterAdded = useCallback(async () => {
+    await awardFlyerPosted();
     setPosterConfirmOpen(false);
     setStatusMessage("Poster logged and flyer-posting points added.");
   }, [awardFlyerPosted]);
@@ -476,16 +476,18 @@ export function VolunteerExplorer() {
                               >
                                 View Instructions
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setStatusMessage(null);
-                                  setPosterConfirmOpen(true);
-                                }}
-                                className="rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-800 shadow-sm transition-colors duration-200 hover:bg-emerald-100"
-                              >
-                                Poster Added
-                              </button>
+                              {isJoined ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStatusMessage(null);
+                                    setPosterConfirmOpen(true);
+                                  }}
+                                  className="rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-800 shadow-sm transition-colors duration-200 hover:bg-emerald-100"
+                                >
+                                  Poster Added
+                                </button>
+                              ) : null}
                             </div>
                             <div className="mt-4 border-t border-slate-100 pt-3">
                               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">

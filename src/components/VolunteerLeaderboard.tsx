@@ -10,14 +10,6 @@ type VolunteerLeaderboardProps = {
   onToggle: () => void;
 };
 
-function getRankEmoji(rank: number): string {
-  if (rank === 1) return "🏆";
-  if (rank === 2) return "🥈";
-  if (rank === 3) return "🥉";
-  if (rank >= 4 && rank <= 10) return "🌟";
-  return "✨";
-}
-
 function getScoreEmoji(score: number, rank: number): string {
   if (rank === 1) return "🏆";
   if (rank === 2) return "🥈";
@@ -28,6 +20,12 @@ function getScoreEmoji(score: number, rank: number): string {
   if (score >= 50) return "💪";
   if (score >= 25) return "🌱";
   return "✨";
+}
+
+function getScoreEmojiClass(rank: number): string {
+  if (rank === 1) return "ml-1 inline-block align-middle animate-bounce";
+  if (rank === 2 || rank === 3) return "ml-1 inline-block align-middle animate-bounce";
+  return "ml-1 inline-block align-middle opacity-80";
 }
 
 export function VolunteerLeaderboard({
@@ -42,10 +40,9 @@ export function VolunteerLeaderboard({
   } = useVolunteerProgress();
 
   return (
-    <div className="flex flex-col bg-amber-50 rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-yellow-50 p-4 shadow-md overflow-hidden transition-all duration-300 w-full max-w-md gap-4">
-      {/* Top summary section */}
-      <div className="flex flex-row justify-between items-start w-full gap-4">
-        <div className="flex flex-col flex-1 gap-1">
+    <div className="flex w-full max-w-md flex-col gap-4 overflow-hidden rounded-3xl border border-amber-200/80 bg-amber-50 bg-gradient-to-br from-amber-50 via-white to-yellow-50 p-4 shadow-md transition-all duration-300">
+      <div className="flex w-full flex-row items-start justify-between gap-4">
+        <div className="flex flex-1 flex-col gap-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-700">
             Leaderboard
           </p>
@@ -68,7 +65,7 @@ export function VolunteerLeaderboard({
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-3 shrink-0">
+        <div className="shrink-0 flex flex-col items-end gap-3">
           <button
             type="button"
             onClick={onToggle}
@@ -81,7 +78,7 @@ export function VolunteerLeaderboard({
             <p className="text-[10px] uppercase tracking-[0.2em] text-white/80">
               Total points
             </p>
-            <p className="text-lg font-bold text-right">
+            <p className="text-right text-lg font-bold">
               {isAuthenticated && currentVolunteer
                 ? getVolunteerPoints(currentVolunteer)
                 : "--"}
@@ -90,54 +87,48 @@ export function VolunteerLeaderboard({
         </div>
       </div>
 
-      {/* Bottom expanding list section */}
       {isExpanded ? (
-        <div className="w-full mt-4 pt-4 border-t-2 border-slate-200 flex flex-col gap-3">
-          <div className="flex justify-between w-full px-4 mb-2 text-sm font-bold text-slate-500 tracking-wider uppercase">
+        <div className="mt-4 flex w-full flex-col gap-3 border-t-2 border-slate-200 pt-4">
+          <div className="mb-2 flex w-full justify-between px-4 text-sm font-bold uppercase tracking-wider text-slate-500">
             <span>Rank &amp; Volunteer</span>
             <span>Score</span>
           </div>
-          <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-3 pb-2 -mr-2">
+          <div className="-mr-2 flex max-h-64 flex-col gap-3 overflow-y-auto pr-3 pb-2">
             {visibleScoreboard.map((entry) => {
               const rank =
-                visibleScoreboard.length > 7 && currentVolunteer?.id === entry.id && currentRank
+                visibleScoreboard.length > 7 &&
+                currentVolunteer?.id === entry.id &&
+                currentRank
                   ? currentRank
                   : visibleScoreboard.findIndex((item) => item.id === entry.id) + 1;
-              const isCurrentVolunteer = !!currentVolunteer && entry.id === currentVolunteer.id;
+              const isCurrentVolunteer =
+                !!currentVolunteer && entry.id === currentVolunteer.id;
               const score = getVolunteerPoints(entry);
               const scoreEmoji = getScoreEmoji(score, rank);
-              const rankLabel =
-                rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
-              const rankEmoji = getRankEmoji(rank);
-              const rankEmojiClass =
-                rank === 1
-                  ? "animate-bounce"
-                  : rank === 2 || rank === 3
-                    ? "animate-pulse"
-                    : "animate-pulse opacity-70";
+              const scoreEmojiClass = getScoreEmojiClass(rank);
+
               return (
                 <div
                   key={entry.id}
-                  className={`flex justify-between items-center bg-white rounded-xl p-4 shadow-sm border border-slate-100 shrink-0 text-sm ${
-                    isCurrentVolunteer ? "ring-2 ring-amber-300 bg-amber-50/80" : ""
-                  } ${rank === 1 ? "shadow-amber-300 shadow-md" : ""}`}
+                  className={`shrink-0 rounded-xl border border-slate-100 bg-white p-4 text-sm shadow-sm ${
+                    isCurrentVolunteer ? "bg-amber-50/80 ring-2 ring-amber-300" : ""
+                  } ${rank === 1 ? "shadow-md shadow-amber-300" : ""}`}
                 >
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-bold text-slate-900">
-                      {rankLabel}{" "}
-                      <span className={`inline-block mr-1 ${rankEmojiClass}`}>
-                        {rankEmoji}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold text-slate-900">
+                        #{rank} {entry.name}
+                        {isCurrentVolunteer ? " (You)" : ""}
                       </span>
-                      {entry.name}
-                      {isCurrentVolunteer ? " (You)" : ""}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      {entry.flyersPosted} flyers · {entry.eventsJoined} events
+                      <span className="text-[11px] text-slate-500">
+                        {entry.flyersPosted} flyers · {entry.eventsJoined} events
+                      </span>
+                    </div>
+                    <span className="text-lg font-bold text-slate-800">
+                      {score}
+                      <span className={scoreEmojiClass}>{scoreEmoji}</span>
                     </span>
                   </div>
-                  <span className="text-lg font-bold text-slate-800">
-                    {score} <span className="ml-1 align-middle">{scoreEmoji}</span>
-                  </span>
                 </div>
               );
             })}
