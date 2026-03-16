@@ -159,7 +159,7 @@ export default function OrganizerPage() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-amber-50">
+    <div className="flex h-screen max-h-screen flex-col overflow-hidden bg-amber-50">
       <header className="flex shrink-0 items-center justify-between border-b border-yellow-200 bg-yellow-400 px-6 py-4 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-300 shadow-md">
@@ -182,8 +182,8 @@ export default function OrganizerPage() {
         </Link>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-4 py-8 md:px-6">
-        <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-md ring-1 ring-slate-100">
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-8 pb-16 md:px-6">
+        <div className="mx-auto w-full max-w-xl rounded-3xl bg-white p-6 pb-8 shadow-md ring-1 ring-slate-100">
           <h2 className="text-lg font-semibold text-slate-800">
             New flyering event
           </h2>
@@ -353,7 +353,7 @@ export default function OrganizerPage() {
             <button
               type="submit"
               disabled={isSubmitting || !acknowledged}
-              className="mt-2 w-full rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-amber-50"
+              className="mt-2 mb-2 w-full rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-200 hover:bg-primary-600 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-amber-50"
             >
               {isSubmitting ? "Creating event…" : "Submit Event"}
             </button>
