@@ -45,7 +45,7 @@ export function EngagementHeatmapAndRecurringSection({
   }
 
   const today = startOfDay(new Date());
-  const firstDate = startOfWeek(new Date(today.getFullYear(), today.getMonth() - 4, 1));
+  const firstDate = startOfWeek(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
   const dayCount = Math.floor((today.getTime() - firstDate.getTime()) / 86400000) + 1;
   const weekCount = Math.ceil(dayCount / 7);
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

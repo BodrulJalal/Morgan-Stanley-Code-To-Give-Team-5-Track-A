@@ -231,15 +231,6 @@ export function VolunteerExplorer() {
             Create Event
           </a>
           {user ? (
-<<<<<<< HEAD
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-md transition-colors duration-200 hover:bg-white"
-            >
-              Log out
-            </button>
-=======
             <div className="relative" ref={profileMenuRef}>
               <button
                 ref={avatarButtonRef}
@@ -288,7 +279,6 @@ export function VolunteerExplorer() {
                   document.body
                 )}
             </div>
->>>>>>> 3bdbdb8dab884775edd98c966a793962158a044d
           ) : (
             <a
               href="/login"
