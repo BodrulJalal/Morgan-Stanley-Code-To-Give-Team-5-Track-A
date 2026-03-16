@@ -1,9 +1,12 @@
+import json
 import os
+from datetime import datetime, timezone
+from typing import Optional
+
+import httpx
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
-import httpx
 
 load_dotenv()
 
@@ -48,6 +51,37 @@ class ZestyRequest(BaseModel):
     context: Optional[str] = None
 
 
+class TopOrganizationStat(BaseModel):
+    organizer: str
+    attendance: int
+    events: int
+
+
+class WeeklySummaryStats(BaseModel):
+    week_start_iso: str
+    week_end_iso: str
+    current_week_engagement: int
+    current_week_unique_volunteers: int
+    current_week_events: int
+    current_week_first_time: int
+    current_week_returning: int
+    total_engagement: int
+    unique_volunteers_total: int
+    upcoming_events: int
+    past_events: int
+    recurring_volunteers: int
+    one_time_volunteers: int
+    avg_participation_per_week: float
+    weekly_growth_rate: float
+    trend_direction: str
+    network_coverage_ratio: Optional[str] = None
+    top_organizations: list[TopOrganizationStat]
+
+
+class WeeklySummaryRequest(BaseModel):
+    stats: WeeklySummaryStats
+
+
 VOLUNTEER_SYSTEM_PROMPT = """You are Zesty, a friendly assistant for LemonTree volunteers — a platform that connects people with flyering events to help spread awareness of local food resources like food pantries and soup kitchens.
 
 **Your role:**
@@ -73,6 +107,15 @@ Help volunteers get the most out of their experience. You can help them:
 
 **Tone:**
 Be warm, encouraging, and concise. Volunteers are doing meaningful community work — acknowledge that. Keep answers short and practical. Always respond in plain text only — no markdown, no bullet symbols, no asterisks, no special formatting characters."""
+
+WEEKLY_SUMMARY_SYSTEM_PROMPT = """You are an analytics writer for LemonTree admins.
+Write a concise weekly engagement summary in plain text only.
+Requirements:
+- 2-4 sentences max.
+- Mention if engagement increased, decreased, or stayed flat.
+- Include notable metrics: current week engagement, unique volunteers, recurring vs one-time, upcoming vs past events, and top organizations.
+- Sound professional and insight-driven.
+- Do not use markdown, bullet symbols, or headings."""
 
 
 async def call_cohere(system: str, messages: list[ChatMessage]) -> str:
@@ -100,6 +143,7 @@ async def call_cohere(system: str, messages: list[ChatMessage]) -> str:
     return data.get("message", {}).get("content", [{}])[0].get("text", "")
 
 
+
 @router.post("")
 async def admin_chat(req: ZestyRequest):
     system_content = SYSTEM_PROMPT
@@ -116,3 +160,27 @@ async def volunteer_chat(req: ZestyRequest):
         system_content += f"\n\n**Upcoming events right now:**\n{req.context}"
     text = await call_cohere(system_content, req.messages)
     return {"text": text}
+
+
+@router.post("/weekly-summary")
+async def weekly_summary(req: WeeklySummaryRequest):
+    stats = req.stats
+    stats_payload = json.dumps(stats.model_dump(mode="json"), ensure_ascii=True, indent=2)
+    prompt = (
+        "Generate a weekly admin engagement summary from this structured data.\n"
+        "Data:\n"
+        f"{stats_payload}\n"
+    )
+    summary = (await call_cohere(
+        WEEKLY_SUMMARY_SYSTEM_PROMPT,
+        [ChatMessage(role="user", content=prompt)],
+    )).strip()
+    if not summary:
+        raise HTTPException(status_code=502, detail="Cohere returned an empty weekly summary.")
+    return {
+        "summary": summary,
+        "week_key": stats.week_start_iso[:10],
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "cached": False,
+        "stale": False,
+    }

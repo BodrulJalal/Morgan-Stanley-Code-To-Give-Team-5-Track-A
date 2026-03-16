@@ -1,13 +1,14 @@
 "use client";
 
-import { Container, Loader, Stack, Text, Title } from "@mantine/core";
+import { Container, Loader, Stack, Tabs, Text, Title } from "@mantine/core";
 import { EngagementHeatmapAndRecurringSection } from "@/components/admin/EngagementHeatmapAndRecurringSection";
 import { PastEventsSection } from "@/components/admin/PastEventsSection";
 import { UpcomingEventsSection } from "@/components/admin/UpcomingEventsSection";
+import { WeeklyAiSummaryCard } from "@/components/admin/WeeklyAiSummaryCard";
 import { useAdminData } from "@/context/AdminDataContext";
 
 export default function LifecycleAnalyticsPage() {
-  const { metrics, loading } = useAdminData();
+  const { metrics, loading, coverageRatio } = useAdminData();
 
   return (
     <Container size="xl" py="md">
@@ -23,13 +24,26 @@ export default function LifecycleAnalyticsPage() {
           <Loader size="sm" />
         ) : (
           <>
+            <WeeklyAiSummaryCard metrics={metrics} coverageRatio={coverageRatio} />
             <EngagementHeatmapAndRecurringSection
               metrics={metrics}
               showHeatmap
               showRecurring={false}
             />
-            <UpcomingEventsSection events={metrics.upcomingEvents.slice(0, 8)} />
-            <PastEventsSection events={metrics.pastEvents.slice(0, 8)} />
+            <Tabs defaultValue="upcoming" variant="outline" radius="md">
+              <Tabs.List>
+                <Tabs.Tab value="upcoming">Upcoming Events</Tabs.Tab>
+                <Tabs.Tab value="past">Past Flyering</Tabs.Tab>
+              </Tabs.List>
+
+              <Tabs.Panel value="upcoming" pt="md">
+                <UpcomingEventsSection events={metrics.upcomingEvents.slice(0, 8)} />
+              </Tabs.Panel>
+
+              <Tabs.Panel value="past" pt="md">
+                <PastEventsSection events={metrics.pastEvents.slice(0, 8)} />
+              </Tabs.Panel>
+            </Tabs>
           </>
         )}
       </Stack>

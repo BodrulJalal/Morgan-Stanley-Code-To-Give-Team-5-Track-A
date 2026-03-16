@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { AdminDataProvider } from "@/context/AdminDataContext";
+import { AdminDataProvider, useAdminData } from "@/context/AdminDataContext";
+import { ZestyAdminAssistant } from "@/components/ZestyAdminAssistant";
 
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard" },
@@ -39,15 +40,17 @@ function AdminSidebar() {
           })}
         </nav>
       </div>
-      <div className="mt-auto px-4 pb-5">
-        <Link
-          href="/hub"
-          className="block px-3 py-2 rounded-xl text-[13px] font-medium text-gray-500 hover:bg-white/70 hover:text-gray-900 transition-colors"
-        >
-          ← Back to Explorer
-        </Link>
-      </div>
     </aside>
+  );
+}
+
+function AdminMain({ children }: { children: ReactNode }) {
+  const { resourceStats } = useAdminData();
+  return (
+    <>
+      {children}
+      <ZestyAdminAssistant resourceStats={resourceStats ?? null} />
+    </>
   );
 }
 
@@ -81,7 +84,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 overflow-hidden">
         <AdminSidebar />
         <main className="flex-1 overflow-y-auto bg-gray-50">
-          <AdminDataProvider>{children}</AdminDataProvider>
+          <AdminDataProvider>
+            <AdminMain>{children}</AdminMain>
+          </AdminDataProvider>
         </main>
       </div>
     </div>

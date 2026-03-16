@@ -95,7 +95,7 @@ function VolunteerKpiGroupCard({ title, detailLabel, detailHref, stats }: Volunt
         {detailLabel ? (
           <Text
             fz="xs"
-            c="blue.6"
+            c="yellow.7"
             fw={600}
             component={detailHref ? Link : "span"}
             href={detailHref}

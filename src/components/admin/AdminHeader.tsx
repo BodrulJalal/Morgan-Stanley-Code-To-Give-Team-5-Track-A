@@ -40,6 +40,7 @@ export function AdminHeader({
           href={backHref}
           radius="xl"
           size="xs"
+          variant="light"
           color="blue"
           fw={600}
         >

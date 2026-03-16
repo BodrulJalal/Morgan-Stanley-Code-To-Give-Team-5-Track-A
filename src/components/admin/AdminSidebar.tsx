@@ -101,19 +101,11 @@ export function AdminSidebar() {
                     return (
                       <NavLink
                         key={item.label}
-                        component={hasHref ? Link : "button"}
                         href={item.href}
                         label={item.label}
                         active={active}
                         disabled={!hasHref}
-                        leftSection={
-                          <ThemeIcon
-                            variant={active ? "filled" : "light"}
-                            color={active ? "blue" : "gray"}
-                          >
-                            <item.icon size={14} />
-                          </ThemeIcon>
-                        }
+                        
                       />
                     );
                   })}

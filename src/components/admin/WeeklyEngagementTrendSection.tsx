@@ -45,7 +45,7 @@ export function WeeklyEngagementTrendSection({
                 type="monotone"
                 dataKey="attendanceCount"
                 name="Attendance"
-                stroke="#7C3AED"
+                stroke="var(--mantine-color-blue-6)"
                 strokeWidth={3}
                 dot={{ r: 2 }}
               />

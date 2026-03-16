@@ -3,8 +3,12 @@
 import { Box, Card, Grid, Text, Title } from "@mantine/core";
 import { Fragment } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { PIE_COLORS } from "@/components/admin/engagementMetrics";
 import type { AdminEngagementMetrics } from "@/components/types/adminDashboard";
+
+const RECURRING_PIE_COLORS = [
+  "var(--mantine-color-yellow-6)",
+  "var(--mantine-color-blue-6)",
+];
 
 type EngagementHeatmapAndRecurringSectionProps = {
   metrics: AdminEngagementMetrics;
@@ -41,7 +45,7 @@ export function EngagementHeatmapAndRecurringSection({
   }
 
   const today = startOfDay(new Date());
-  const firstDate = startOfWeek(new Date(today.getFullYear(), today.getMonth() - 4, 1));
+  const firstDate = startOfWeek(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
   const dayCount = Math.floor((today.getTime() - firstDate.getTime()) / 86400000) + 1;
   const weekCount = Math.ceil(dayCount / 7);
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -94,7 +98,8 @@ export function EngagementHeatmapAndRecurringSection({
                       const future = date > today;
                       const key = isoDate(date);
                       const value = attendanceByDate.get(key) ?? 0;
-                      const alpha = future ? 0 : Math.max(0.08, value / maxDailyAttendance);
+                      const normalized = maxDailyAttendance > 0 ? value / maxDailyAttendance : 0;
+                      const alpha = future ? 0 : Math.max(0.08, Math.pow(normalized, 0.65));
 
                       return (
                         <Box
@@ -107,7 +112,7 @@ export function EngagementHeatmapAndRecurringSection({
                             border: "1px solid var(--mantine-color-gray-2)",
                             backgroundColor: future
                               ? "var(--mantine-color-gray-1)"
-                              : `rgba(124, 58, 237, ${alpha})`,
+                              : `rgba(202, 138, 4, ${alpha})`,
                           }}
                         />
                       );
@@ -138,19 +143,19 @@ export function EngagementHeatmapAndRecurringSection({
               No attendee data yet.
             </Text>
           ) : (
-            <Box mt="md" h={288}>
+            <Box mt="md" h={180}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={metrics.recurringBreakdown}
                     dataKey="value"
                     nameKey="label"
-                    innerRadius={70}
-                    outerRadius={100}
+                    innerRadius={40}
+                    outerRadius={60}
                     paddingAngle={3}
                   >
                     {metrics.recurringBreakdown.map((_, index) => (
-                      <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      <Cell key={index} fill={RECURRING_PIE_COLORS[index % RECURRING_PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />

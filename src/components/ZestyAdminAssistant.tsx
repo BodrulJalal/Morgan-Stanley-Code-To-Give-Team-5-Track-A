@@ -82,10 +82,21 @@ export function ZestyAdminAssistant({ resourceStats }: { resourceStats: Resource
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [showIntroBubble, setShowIntroBubble] = useState(true);
+  const [hasNotification, setHasNotification] = useState(true);
+
+  useEffect(() => {
+    if (!showIntroBubble) return;
+    const id = window.setTimeout(() => {
+      setShowIntroBubble(false);
+    }, 2000);
+    return () => window.clearTimeout(id);
+  }, [showIntroBubble]);
 
   useEffect(() => {
     if (isOpen) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      setHasNotification(false);
     }
   }, [messages, isOpen]);
 
@@ -209,16 +220,32 @@ export function ZestyAdminAssistant({ resourceStats }: { resourceStats: Resource
         </div>
       )}
 
-      {/* Floating lemon button */}
+      {/* Floating lemon button with notification (position unchanged) */}
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+          setHasNotification(false);
+          setShowIntroBubble(false);
+        }}
         className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border-2 border-yellow-300 bg-yellow-400 shadow-lg ring-2 ring-yellow-500/50 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         aria-label={isOpen ? "Close Zesty" : "Open Zesty"}
         aria-expanded={isOpen}
       >
-        <img src="/lemon-mascot.png" alt="Zesty" className="h-12 w-12 rounded-full object-cover" />
+        <span className="relative inline-flex">
+          {hasNotification && !isOpen && (
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 ring-2 ring-yellow-400" />
+          )}
+          <img src="/lemon-mascot.png" alt="Zesty" className="h-12 w-12 rounded-full object-cover" />
+        </span>
       </button>
+
+      {/* Intro greeting bubble */}
+      {showIntroBubble && !isOpen && (
+        <div className="fixed bottom-9 right-[6.5rem] z-40 max-w-xs rounded-2xl bg-white px-3 py-2 text-xs text-slate-700 shadow-lg ring-1 ring-slate-200">
+          Hi team 👋 I&apos;m Zesty. Need help with the platform, ask me.
+        </div>
+      )}
     </>
   );
 }

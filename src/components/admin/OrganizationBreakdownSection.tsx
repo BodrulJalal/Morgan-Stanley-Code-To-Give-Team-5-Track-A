@@ -82,7 +82,11 @@ export function OrganizationBreakdownSection({
                   <XAxis type="number" tick={{ fontSize: 12 }} />
                   <YAxis type="category" dataKey="organizer" tick={{ fontSize: 12 }} width={120} />
                   <Tooltip />
-                  <Bar dataKey="attendance" fill="#7C3AED" radius={[0, 8, 8, 0]} />
+                  <Bar
+                    dataKey="attendance"
+                    fill="var(--mantine-color-blue-6)"
+                    radius={[0, 8, 8, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
